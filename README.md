@@ -7,11 +7,13 @@
 * 页面路由绝对禁止出现/backend、/frontend、/warehouse（远景包括map）
 * 在定义接口代理时，上述的路由单词已经被定义，如果使用，刷新页面将出现404
 
-## 安装antd
+## 构建步骤
+
+### 安装antd
 
 * npm install antd
 
-## 按需加载
+### 按需加载
 
 * npm install  react-app-rewired customize-cra babel-plugin-import
 * 在根目录创建config-overrides.js文件，并写入内容
@@ -31,12 +33,12 @@
   },
   目的是启动运行项目时加载config-overrides.js配置文件
 
-## 自定义主题
+### 自定义主题
 
 * 下载工具包 npm install less less-loader
 * 修改config-overrides.js
 
-## 引入路由
+### 引入路由
 
 * npm add react-router-dom
 
