@@ -9,6 +9,8 @@ import {isEmptyObject} from "../../../utils/var"
 import {Input, Button, Icon, Menu, Popover, Avatar, Breadcrumb, Badge, Modal} from 'antd';
 import { FundProjectionScreenOutlined, NotificationOutlined,ToolOutlined, HistoryOutlined, MessageOutlined, DesktopOutlined,HomeOutlined,ExceptionOutlined,CodeOutlined,LaptopOutlined} from '@ant-design/icons';
 import DashBoard from '../../backend/dashboard'
+import Gateway from '../../backend/gateway'
+import {requestLogout} from "../../../api";
 /*
  * 文件名：index.jsx
  * 作者：saya
@@ -61,9 +63,9 @@ class Backend1 extends Component {
   initHeaderMenu = () => (
     <div className="backend-layout-header-info-hover">
       <div className='user-img-div'>
-        <Avatar size={64} src={`${process.env.PUBLIC_URL}/picture/user/2020062697574.png`}/>
+        <Avatar size={64} src={this.userCatche.user.logo}/>
         <div className='operator-img'>
-          <span>{"saya"}</span>
+          <span>{this.userCatche.user.user}</span>
           <Button type="link" href='/backstage/set/info'>更换头像</Button>
         </div>
       </div>
@@ -86,8 +88,8 @@ class Backend1 extends Component {
       // 向pre添加<Menu.Item>
       if (!item.children && item.hidden === false) {
         pre.push((
-          <Menu.Item key={item.key}>{item.title}</Menu.Item>
-          //<Menu.Item key={item.key}><Button type="link" href={item.key}>{item.title}</Button></Menu.Item>
+          //<Menu.Item key={item.key}>{item.title}</Menu.Item>
+          <Menu.Item key={item.key}><Button type="link" href={item.key}>{item.title}</Button></Menu.Item>
         ))
       } else if (item.children && item.hidden === false) {
         // 查找一个与当前请求路径匹配的子Item
@@ -167,12 +169,37 @@ class Backend1 extends Component {
     this.setState({collapsed: collapsed})
   };
 
+  /*
+   退出登陆
+    */
+  logout = () => {
+    // 显示确认框
+    Modal.confirm({
+      title: '操作确认',
+      content:'确定退出吗?',
+      onOk: async () => {
+        // 请求注销接口
+        await requestLogout();
+        // 删除保存的user数据
+        storageUtils.removeUser();
+        memoryUtils.user = {};
+        // 跳转到login
+        this.props.history.replace('/login')
+      }
+    })
+  };
+
 
   /*
    * 在第一次render()之前执行一次
    * 为第一个render()准备数据(必须同步的)
    */
   componentWillMount() {
+    this.userCatche = memoryUtils.user || {};
+    if (!this.userCatche || !this.userCatche.user) {
+      // 自动跳转到登陆(在render()中)
+      return <Redirect to='/login'/>
+    }
     // 初始化左侧导航
     this.menuNodes = this.getMenuNodes(menuConfig);
     // 顶部用户头像下拉
@@ -185,7 +212,7 @@ class Backend1 extends Component {
     // 如果内存没有存储user ==> 当前没有登陆
     if (!user || !user.user) {
       // 自动跳转到登陆(在render()中)
-      //return <Redirect to='/login'/>
+      return <Redirect to='/login'/>
     }
     // 读取状态
     const {collapsed,openKeys} = this.state;
@@ -193,7 +220,7 @@ class Backend1 extends Component {
     const {title, local} = this.getTitle();
     return (
       <div className="backend1-container">
-        <div className='background1-div' style={{backgroundImage:`url('${ process.env.PUBLIC_URL+'/picture/login/login_background1.png'}')`}}>
+        <div className='background1-div' style={{backgroundImage:`url('${process.env.PUBLIC_URL+'/picture/login/login_background1.png' || user.user.background}')`}}>
         </div>
         <header className="background1-header">
           <div className='header-logo'>
@@ -268,6 +295,9 @@ class Backend1 extends Component {
               <div className='container-div'>
                 <Switch>
                   <Route path='/backstage/api/mana' component={DashBoard}/>
+                  <Route path='/backstage/device/gateway' component={Gateway}/>
+                  {/*默认、及匹配不到时的页面*/}
+                  <Redirect to='/backstage/api/mana'/>
                 </Switch>
               </div>
             </div>
@@ -275,7 +305,7 @@ class Backend1 extends Component {
               {
                 !(isEmptyObject(user.log)) ?
                   <span>{`您上次操作时间:${user.log.date},操作地点:${user.log.city}(${user.log.ip}),操作明细:${user.log.logType.describe}`}</span> :
-                  <span>Hi，这是您第一次使用吧？如有需要帮助，请及时联系运营团队。</span>
+                  <span>Hi，这是您第一次使用吧？如果需要帮助，请及时联系运营团队。</span>
               }
             </div>
           </div>

@@ -25,20 +25,20 @@ const backstageMenuList = [
     },
     {
         title: '设备管理',// 菜单标题名称
-        key: '/backstage/oss',// 对应的path
+        key: '/backstage/device',// 对应的path
         icon: 'ToolOutlined',// 图标名称
         hidden: false, //是否隐藏
         requireAuth: true, // 是否需要登录后访问
         children: [ // 子菜单列表
             {
                 title: '网关管理',
-                key: '/backstage/oss/wallpaper',
+                key: '/backstage/device/gateway',
                 hidden: false,
                 requireAuth: true
             },
             {
                 title: '设备管理',
-                key: '/backstage/oss/illustration',
+                key: '/backstage/device/client',
                 hidden: false,
                 requireAuth: true
             }

@@ -9,7 +9,7 @@ const url = dev;
 //在定义接口代理时，上述的路由单词已经被定义，如果使用，刷新页面将出现404，
 module.exports = function (app) {
     // ...You can now register proxies as you wish!
-    app.use(createProxyMiddleware('/backend1/**', {
+    app.use(createProxyMiddleware('/backend/**', {
         target: url,
         changeOrigin: true,
     }));

@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-
+import DocumentTitle from 'react-document-title'
 /*
  * 文件名：index.jsx
  * 作者：saya
@@ -17,17 +17,19 @@ class DashBoard extends Component {
 
   render() {
     return (
-      <div style={{height:"300em"}}>
-        34567890<br/>
-        34567890<br/>
-        34567890<br/>
-        34567890<br/>
-        34567890<br/>
-        34567890<br/>
-        34567890<br/>
-        34567890<br/>34567890<br/>
-        34567890<br/>
-      </div>
+      <DocumentTitle title='物联网智慧家庭·远程控制'>
+        <div>
+          34567890<br/>
+          34567890<br/>
+          34567890<br/>
+          34567890<br/>
+          34567890<br/>
+          34567890<br/>
+          34567890<br/>
+          34567890<br/>34567890<br/>
+          34567890<br/>
+        </div>
+      </DocumentTitle>
     );
   }
 }
