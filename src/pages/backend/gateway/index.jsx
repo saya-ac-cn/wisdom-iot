@@ -1,10 +1,12 @@
 import React, { Component } from 'react';
 import DocumentTitle from 'react-document-title'
-import {Col, Form, Button, Table, DatePicker, Select, Icon} from 'antd';
+import {SearchOutlined, ReloadOutlined, PlusOutlined, EyeOutlined, EditOutlined, DeleteOutlined} from '@ant-design/icons';
+import {Col, Form, Button, Table, DatePicker, Input, Select, Modal} from 'antd';
 import {getIotGatewayType, getIotGatewayPage} from '../../../api'
 import {openNotificationWithIcon} from '../../../utils/window'
 import moment from 'moment';
-import axios from 'axios'
+import "./index.less"
+import EditGateWay from "./edit"
 /*
  * 文件名：index.jsx
  * 作者：saya
@@ -15,6 +17,8 @@ const {RangePicker} = DatePicker;
 const {Option} = Select;
 // 定义组件（ES6）
 class Gateway extends Component {
+
+  formRef = React.createRef();
 
   state = {
     // 返回的单元格数据
@@ -32,9 +36,13 @@ class Gateway extends Component {
       date: null,
       beginTime: null,// 搜索表单的开始时间
       endTime: null,// 搜索表单的结束时间
-      selectType: ''//用户选择的日志类别
+      code: '',// 网关编码
+      selectGatewayType: '',//用户选择的日志类别
+      selectStatusType: ''//用户选择的状态类别
     },
-    type: [],// 系统返回的日志类别
+    gatewayType: [],// 系统返回的设备类别
+    statusType: [],// 设备状态类别
+    modalStatus: 0, // 标识添加/更新的确认框是否显示, 0: 都不显示, 1: 显示添加, 2: 显示更新
   };
 
   /*
@@ -49,6 +57,12 @@ class Gateway extends Component {
       {
         title: '网关编码',
         dataIndex: 'code', // 显示数据对应的属性名
+      },
+      {
+        title: '认证编码',
+        render: (text,record) => {
+            return record.authenInfo.username || null;
+        }
       },
       {
         title: '网关类型',
@@ -73,17 +87,66 @@ class Gateway extends Component {
       {
         title: '创建者',
         dataIndex: 'source', // 显示数据对应的属性名
-      }
-      ,
+      },
       {
         title: '最后心跳',
         dataIndex: 'lastHeartbeat', // 显示数据对应的属性名
-      }
+      },
+      {
+        title: '操作',
+        render: (text, record) => (
+          <div>
+            <Button type="primary" title="查看" onClick={() => this.handleModalEdit(record)} shape="circle" icon={<EyeOutlined/>}/>
+            &nbsp;
+            <Button type="primary" title="编辑" onClick={() => this.handleModalEdit(record)} shape="circle" icon={<EditOutlined/>}/>
+            &nbsp;
+            <Button type="primary" title="删除" onClick={() => this.handleDellMemo(record)} shape="circle" icon={<DeleteOutlined />}/>
+          </div>
+        ),
+      },
     ]
   };
 
   /**
-   * 获取日志数据
+   * 获取网关类别
+   * @returns {Promise<void>}
+   */
+  getTypeData = async () => {
+    let _this = this;
+    // 发异步ajax请求, 获取数据
+    const {msg, code, data} = await getIotGatewayType();
+    if (code === 0) {
+      // 利用更新状态的回调函数，渲染下拉选框
+      let gatewayType = [];
+      gatewayType.push((<Option key={-1} value="">请选择</Option>));
+      data.forEach(item => {
+        gatewayType.push((<Option key={item.id} value={item.id}>{item.name}</Option>));
+      });
+      _this.setState({
+        gatewayType
+      });
+    } else {
+      openNotificationWithIcon("error", "错误提示", msg);
+    }
+  };
+
+  /**
+   * 初始化设备状态下拉选择
+   */
+  initStatusSelect = () => {
+    let _this = this;
+    let statusType = [
+      (<Option key={-1} value="">请选择</Option>),
+      (<Option key={1} value="1">已启用</Option>),
+      (<Option key={2} value="2">已禁用</Option>),
+    ];
+    _this.setState({
+      statusType
+    });
+  };
+
+  /**
+   * 获取网关数据
    * @returns {Promise<void>}
    */
   getDatas = async () => {
@@ -91,9 +154,11 @@ class Gateway extends Component {
     let para = {
       nowPage: _this.state.nowPage,
       pageSize: _this.state.pageSize,
-      //type: _this.state.filters.selectType,
-      //beginTime: _this.state.filters.beginTime,
-      //endTime: _this.state.filters.endTime,
+      code: _this.state.filters.code,
+      deviceType: _this.state.filters.selectGatewayType,
+      enable: _this.state.filters.selectStatusType,
+      beginTime: _this.state.filters.beginTime,
+      endTime: _this.state.filters.endTime,
     };
     // 在发请求前, 显示loading
     _this.setState({listLoading: true});
@@ -119,7 +184,9 @@ class Gateway extends Component {
     let filters = _this.state.filters;
     filters.beginTime = null;
     filters.endTime = null;
-    filters.selectType = '';
+    filters.code = '';
+    filters.selectGatewayType = '';
+    filters.selectStatusType = '';
     _this.setState({
       nowPage: 1,
       filters: filters
@@ -170,11 +237,14 @@ class Gateway extends Component {
     });
   };
 
-  // 日志选框发生改变
-  onChangeType = (value) => {
+  /**
+   * 网关类别选框发生改变
+   * @param value
+   */
+  onChangeGatewayType = (value) => {
     let _this = this;
     let {filters} = _this.state;
-    filters.selectType = value;
+    filters.selectGatewayType = value;
     _this.setState({
       filters,
       nowPage: 1,
@@ -183,15 +253,87 @@ class Gateway extends Component {
     });
   };
 
+  /**
+   * 网关状态选框发生改变
+   * @param value
+   */
+  onChangeStatusType = (value) => {
+    let _this = this;
+    let {filters} = _this.state;
+    filters.selectStatusType = value;
+    _this.setState({
+      filters,
+      nowPage: 1,
+    }, function () {
+      _this.getDatas()
+    });
+  };
+
+  /**
+   * 双向绑定用户查询网关编码
+   * @param event
+   */
+  codeInputChange = (event) => {
+    let _this = this;
+    const value = event.target.value;
+    let filters = _this.state.filters;
+    filters.code = value;
+    _this.setState({
+      nowPage: 1,
+      filters
+    })
+  };
+
+  /*
+    * 显示添加的弹窗
+    */
+  handleModalAdd = () => {
+    this.setState({
+      modalStatus: 1
+    })
+  };
+
+  /*
+  * 显示修改的弹窗
+  */
+  handleModalEdit = (value) => {
+    this.lineDate = value;
+    this.setState({
+      modalStatus: 2
+    })
+  };
+
+  /*
+  * 响应点击取消: 隐藏弹窗
+  */
+  handleModalCancel = () => {
+    console.log(this.formRef)
+    // 清除输入数据
+    this.formRef.current.formRef.current.resetFields();
+    // 隐藏确认框
+    this.setState({
+      modalStatus: 0
+    })
+  };
+
+  /**
+   * 提交表单，添加网关设备
+   */
+  handleAddGateWay = () => {
+//        const categoryName = this.formRef.current.formRef.current.getFieldsValue().categoryName  //得到子组件传过来的值
+  }
+
   /*
    *为第一次render()准备数据
    * 因为要异步加载数据，所以方法改为async执行
    */
   componentWillMount() {
-    // 初始化日志类别数据
-    //this.getTypeData();
+    // 初始化网关类别数据
+    this.getTypeData();
     // 初始化表格属性设置
     this.initColumns();
+    // 初始化设备状态数
+    this.initStatusSelect()
   };
 
   /*
@@ -206,7 +348,9 @@ class Gateway extends Component {
 
   render() {
     // 读取状态数据
-    const {datas, dataTotal, nowPage, pageSize, listLoading,filters, type} = this.state;
+    const {datas, dataTotal, nowPage, pageSize, listLoading,filters, gatewayType,statusType, modalStatus} = this.state;
+    // 读取所选中的行数据
+    const gateWay = this.lineDate || {}; // 如果还没有指定一个空对象
     let {beginTime,endTime} = filters;
     let rangeDate;
     if (beginTime !== null && endTime !== null){
@@ -219,23 +363,38 @@ class Gateway extends Component {
         <section>
           <Col span={24} className="toolbar">
             <Form layout="inline">
-              <Form.Item>
-                <Select value={filters.selectType} className="queur-type" showSearch onChange={this.onChangeType}
+              <Form.Item label="网关编码">
+                <Input type='text' value={filters.code} onChange={this.codeInputChange}
+                       placeholder='按网关编码检索'/>
+                </Form.Item>
+              <Form.Item label="网关类型">
+                <Select value={filters.selectGatewayType} className="queur-type" showSearch onChange={this.onChangeGatewayType}
                         placeholder="请选择日志类别">
-                  {type}
+                  {gatewayType}
                 </Select>
               </Form.Item>
-              <Form.Item>
+              <Form.Item label="网关状态">
+                <Select value={filters.selectStatusType} className="queur-type" showSearch onChange={this.onChangeStatusType}
+                        placeholder="请选择网关状态">
+                  {statusType}
+                </Select>
+              </Form.Item>
+              <Form.Item label="最后心跳">
                 <RangePicker value={rangeDate} onChange={this.onChangeDate}/>
               </Form.Item>
               <Form.Item>
                 <Button type="primary" htmlType="button" onClick={this.getDatas}>
-                  <Icon type="search" />查询
+                  <SearchOutlined />查询
                 </Button>
               </Form.Item>
               <Form.Item>
                 <Button type="primary" htmlType="button" onClick={this.reloadPage}>
-                  <Icon type="reload" />重置
+                  <ReloadOutlined />重置
+                </Button>
+              </Form.Item>
+              <Form.Item>
+                <Button type="primary" htmlType="button" onClick={this.handleModalAdd}>
+                  <PlusOutlined />添加
                 </Button>
               </Form.Item>
             </Form>
@@ -250,6 +409,14 @@ class Gateway extends Component {
                      onChange: this.changePage,
                    }}/>
           </Col>
+          <Modal
+            title="添加网关"
+            width="50%"
+            visible={modalStatus === 1}
+            onOk={this.handleAddGateWay}
+            onCancel={this.handleModalCancel}>
+            <EditGateWay ref={this.formRef} gateWay={gateWay}/>
+          </Modal>
         </section>
       </DocumentTitle>
     );

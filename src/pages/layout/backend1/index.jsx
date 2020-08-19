@@ -6,7 +6,7 @@ import menuConfig from '../../../config/backendMenuConfig'
 import memoryUtils from "../../../utils/memoryUtils";
 import storageUtils from '../../../utils/storageUtils'
 import {isEmptyObject} from "../../../utils/var"
-import {Input, Button, Icon, Menu, Popover, Avatar, Breadcrumb, Badge, Modal} from 'antd';
+import { Button, Menu, Popover, Avatar, Breadcrumb, Badge, Modal} from 'antd';
 import { FundProjectionScreenOutlined, NotificationOutlined,ToolOutlined, HistoryOutlined, MessageOutlined, DesktopOutlined,HomeOutlined,ExceptionOutlined,CodeOutlined,LaptopOutlined} from '@ant-design/icons';
 import DashBoard from '../../backend/dashboard'
 import Gateway from '../../backend/gateway'

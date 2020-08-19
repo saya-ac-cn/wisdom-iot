@@ -40,7 +40,22 @@
 
 ### 引入路由
 
-* npm add react-router-dom
+```shell script
+  npm add react-router-dom
+```
+
+### 安装 axios
+```shell script
+    npm add axios
+```
+### 安装 store
+```shell script
+    npm install store
+```
+### 安装 http-proxy-middleware 用于设置多个代理
+```shell script
+    npm install http-proxy-middleware
+```
 
 ### 重大变更历程事件
 
