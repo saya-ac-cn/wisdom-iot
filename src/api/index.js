@@ -25,10 +25,10 @@ export const requestLogout = params => ajax(`${backendAPI}/logout`, params, 'POS
 export const getIotGatewayType = params => ajax(`${backendAPI}/api/iot/gateway/type`, params, 'GET');
 // 获取网关分页列表
 export const getIotGatewayPage = params => ajax(`${backendAPI}/api/iot/gateway`, params, 'GET');
-// 发布动态
-export const publishNews = params => ajax(`${backendAPI}/api/message/news/publish`, params, 'POST');
-// 删除动态
-export const deleteNews = params => ajax(`${backendAPI}/api/message/news/delete`, params, 'DELETE');
+// 添加网关
+export const addIotGateway = params => ajax(`${backendAPI}/api/iot/gateway`, params, 'POST');
+// 修改网关
+export const editIotGateway = params => ajax(`${backendAPI}/api/iot/gateway`, params, 'PUT');
 // 查询动态
 export const getNews = params => ajax(`${backendAPI}/api/message/news/show`, params, 'GET');
 // 修改动态

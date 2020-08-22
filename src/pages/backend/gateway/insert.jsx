@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types'
-import {Form, Input, Card, Tooltip, Select, Button} from "antd";
+import {Form, Input, Card, Tooltip, Select} from "antd";
 import {QuestionCircleOutlined} from '@ant-design/icons';
-import {getIotGatewayType, editIotGateway} from '../../../api'
+import {getIotGatewayType} from '../../../api'
 import {openNotificationWithIcon} from "../../../utils/window";
 import memoryUtils from "../../../utils/memoryUtils";
 import {clearTrimValueEvent} from "../../../utils/string";
@@ -15,31 +15,13 @@ import {Redirect} from "react-router-dom";
  */
 const { Option } = Select;
 // 定义组件（ES6）
-class EditGateWay extends Component {
+class AddGateWay extends Component {
 
   formRef = React.createRef();
 
-
   state = {
-    gatewayType: [],// 系统返回的设备类别
-    statusType: [],// 设备状态类别
-    infoLoading: false,// 提交修改网关信息后，按钮显示加载样式
-    passwordLoading: false// 提交修改密码后，按钮显示加载样式
+    gatewayType: []// 系统返回的设备类别
   }
-
-  /**
-   * 初始化设备状态下拉选择
-   */
-  initStatusSelect = () => {
-    let _this = this;
-    let statusType = [
-      (<Option key={1} value="1">已启用</Option>),
-      (<Option key={2} value="2">已禁用</Option>),
-    ];
-    _this.setState({
-      statusType
-    });
-  };
 
   /**
    * 获取网关类别
@@ -72,78 +54,18 @@ class EditGateWay extends Component {
     gateWay: PropTypes.object,// 要修改的接口信息，用于回显
   };
 
-  /**
-   * 提交表单，修改密码
-   */
-  handleEditPassword = (e) => {
-    e.preventDefault();
-    let _this = this;
-    let {gateWay} = _this.props;
-    _this.formRef.current.validateFields(["authenPassword"])
-      .then( async (values) => {
-        let para = {
-          id: gateWay.id,
-          authenInfo: {password:values.authenPassword}
-        }
-        _this.setState({passwordLoading: true});
-        const {msg, code} = await editIotGateway(para);
-        _this.setState({passwordLoading: false});
-        if (code === 0) {
-          openNotificationWithIcon("success", "操作结果", "密码修改成功");
-        } else {
-          openNotificationWithIcon("error", "错误提示", msg);
-        }
-      }).catch(errorInfo => {
-      console.log(errorInfo)
-    });
-  }
-
-  /**
-   * 提交表单，修改网关信息
-   */
-  handleEditGateWay = (e) => {
-    e.preventDefault();
-    let _this = this;
-    let {gateWay} = _this.props;
-    _this.formRef.current.validateFields(["gatewayEnable","gatewayCode","gatewayName","gatewayAddress","gatewayType"])
-      .then( async (values) => {
-        let para = {
-          id: gateWay.id,
-          name: values.gatewayName,
-          address: values.gatewayAddress,
-          deviceType: values.gatewayType,
-          authenInfo: {enable:values.gatewayEnable}
-        }
-        _this.setState({infoLoading: true});
-        const {msg, code} = await editIotGateway(para);
-        _this.setState({infoLoading: false});
-        if (code === 0) {
-          openNotificationWithIcon("success", "操作结果", "网关修改成功");
-        } else {
-          openNotificationWithIcon("error", "错误提示", msg);
-        }
-      }).catch(errorInfo => {
-      console.log(errorInfo)
-    });
-  }
-
   componentWillMount () {
     // 初始化网关类别数据
     this.getTypeData();
-    // 初始化设备状态数
-    this.initStatusSelect()
     this.formItemLayout = {
       labelCol: {span: 4},
       wrapperCol: {span: 14},
-    };
-    this.buttonItemLayout = {
-      wrapperCol: {span: 14, offset: 4},
     };
   }
 
   render() {
     const {gateWay} = this.props;
-    const {gatewayType, statusType, passwordLoading, infoLoading} = this.state;
+    const {gatewayType} = this.state;
     const user = memoryUtils.user;
     // 如果内存没有存储user ==> 当前没有登陆
     if (!user || !user.user) {
@@ -158,19 +80,8 @@ class EditGateWay extends Component {
                      rules={[{required: true, message: '请输入认证密钥'},{min: 6, message: '长度在 6 到 15 个字符'},{max: 15, message: '长度在 6 到 15 个字符'}]} {...this.formItemLayout}>
             <Input type="password" placeholder='请输入认证密钥'/>
           </Form.Item>
-          <Form.Item {...this.buttonItemLayout}>
-            <Button type="primary" htmlType="submit" loading={passwordLoading} onClick={e => this.handleEditPassword(e)}>
-              修改密码
-            </Button>
-          </Form.Item>
         </Card>
         <Card title="网关信息" bordered={false}>
-          <Form.Item label={<span>是否启用&nbsp;<Tooltip title="网关是否可以连接服务器进行认证"><QuestionCircleOutlined /></Tooltip></span>}
-                     name="gatewayEnable" initialValue={gateWay.gatewayEnable || "1"}  rules={[{required: true, message: '请选择是否启用'}]} {...this.formItemLayout}>
-            <Select placeholder="请选择网关状态" allowClear>
-              {statusType}
-            </Select>
-          </Form.Item>
           <Form.Item label={<span>网关编码&nbsp;<Tooltip title="网关编码是您的设备在平台中的唯一表示"><QuestionCircleOutlined /></Tooltip></span>}
              name="gatewayCode" initialValue={gateWay.gatewayCode || `IOT${(user.user.user).toUpperCase()}${new Date().getTime()}`}  getValueFromEvent={ (e) => clearTrimValueEvent(e)}
                      rules={[{required: true, message: '请输入网关编码'},{min: 6, message: '长度在 6 到 30 个字符'},{max: 30, message: '长度在 6 到 30 个字符'}]} {...this.formItemLayout}>
@@ -186,14 +97,13 @@ class EditGateWay extends Component {
           </Form.Item>
           <Form.Item label={<span>网关类型&nbsp;<Tooltip title="请根据您的网关类型进行选择"><QuestionCircleOutlined /></Tooltip></span>}
                      name="gatewayType" initialValue={gateWay.gatewayType}  rules={[{required: true, message: '请选择网关类型'}]} {...this.formItemLayout}>
-            <Select placeholder="请选择网关类型" allowClear>
+            <Select
+              placeholder="请选择网关类型"
+              onChange={this.onGenderChange}
+              allowClear
+            >
               {gatewayType}
             </Select>
-          </Form.Item>
-          <Form.Item {...this.buttonItemLayout}>
-            <Button type="primary" htmlType="submit" loading={infoLoading} onClick={e => this.handleEditGateWay(e)}>
-              修改网关
-            </Button>
           </Form.Item>
         </Card>
       </Form>
@@ -202,4 +112,4 @@ class EditGateWay extends Component {
 }
 
 // 对外暴露
-export default EditGateWay;
+export default AddGateWay;

@@ -2,10 +2,11 @@ import React, { Component } from 'react';
 import DocumentTitle from 'react-document-title'
 import {SearchOutlined, ReloadOutlined, PlusOutlined, EyeOutlined, EditOutlined, DeleteOutlined} from '@ant-design/icons';
 import {Col, Form, Button, Table, DatePicker, Input, Select, Modal} from 'antd';
-import {getIotGatewayType, getIotGatewayPage} from '../../../api'
+import {getIotGatewayType, getIotGatewayPage, addIotGateway} from '../../../api'
 import {openNotificationWithIcon} from '../../../utils/window'
 import moment from 'moment';
 import "./index.less"
+import AddGateWay from "./insert"
 import EditGateWay from "./edit"
 /*
  * 文件名：index.jsx
@@ -96,7 +97,7 @@ class Gateway extends Component {
         title: '操作',
         render: (text, record) => (
           <div>
-            <Button type="primary" title="查看" onClick={() => this.handleModalEdit(record)} shape="circle" icon={<EyeOutlined/>}/>
+            <Button type="primary" title="查看" onClick={() => this.handleModalView(record)} shape="circle" icon={<EyeOutlined/>}/>
             &nbsp;
             <Button type="primary" title="编辑" onClick={() => this.handleModalEdit(record)} shape="circle" icon={<EditOutlined/>}/>
             &nbsp;
@@ -297,7 +298,14 @@ class Gateway extends Component {
   * 显示修改的弹窗
   */
   handleModalEdit = (value) => {
-    this.lineDate = value;
+    this.lineDate = {
+      "id": value.id,
+      "gatewayEnable":value.authenInfo.enable.toString(),
+      "gatewayCode":value.code,
+      "gatewayName":value.name,
+      "gatewayAddress":value.address,
+      "gatewayType":value.deviceType
+    };
     this.setState({
       modalStatus: 2
     })
@@ -307,7 +315,6 @@ class Gateway extends Component {
   * 响应点击取消: 隐藏弹窗
   */
   handleModalCancel = () => {
-    console.log(this.formRef)
     // 清除输入数据
     this.formRef.current.formRef.current.resetFields();
     // 隐藏确认框
@@ -319,8 +326,34 @@ class Gateway extends Component {
   /**
    * 提交表单，添加网关设备
    */
-  handleAddGateWay = () => {
-//        const categoryName = this.formRef.current.formRef.current.getFieldsValue().categoryName  //得到子组件传过来的值
+  handleAddGateWay = (e) => {
+    e.preventDefault();
+    let _this = this;
+    _this.formRef.current.formRef.current.validateFields(["authenPassword","gatewayCode","gatewayName","gatewayAddress","gatewayType"])
+      .then(async (values) => {
+        let para = {
+          code: values.gatewayCode,
+          name: values.gatewayName,
+          address: values.gatewayAddress,
+          deviceType: values.gatewayType,
+          authenInfo: {password:values.authenPassword}
+        }
+        const {msg, code} = await addIotGateway(para)
+        _this.setState({listLoading: false});
+        if (code === 0) {
+          openNotificationWithIcon("success", "操作结果", "添加成功");
+          // 重置表单
+          _this.formRef.current.formRef.current.resetFields();
+          // 关闭弹窗
+          _this.handleModalCancel()
+          // 重新加载数据
+          _this.getDatas();
+        } else {
+          openNotificationWithIcon("error", "错误提示", msg);
+        }
+      }).catch(errorInfo => {
+        console.log(errorInfo)
+      });
   }
 
   /*
@@ -369,7 +402,7 @@ class Gateway extends Component {
                 </Form.Item>
               <Form.Item label="网关类型">
                 <Select value={filters.selectGatewayType} className="queur-type" showSearch onChange={this.onChangeGatewayType}
-                        placeholder="请选择日志类别">
+                        placeholder="请选择网关类型">
                   {gatewayType}
                 </Select>
               </Form.Item>
@@ -414,6 +447,15 @@ class Gateway extends Component {
             width="50%"
             visible={modalStatus === 1}
             onOk={this.handleAddGateWay}
+            onCancel={this.handleModalCancel}>
+            <AddGateWay ref={this.formRef} gateWay={gateWay}/>
+          </Modal>
+          <Modal
+            title="修改网关"
+            width="50%"
+            visible={modalStatus === 2}
+            closable={true}
+            footer={null}
             onCancel={this.handleModalCancel}>
             <EditGateWay ref={this.formRef} gateWay={gateWay}/>
           </Modal>
