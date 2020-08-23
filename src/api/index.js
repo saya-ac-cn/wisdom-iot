@@ -21,6 +21,7 @@ export const baiduSearchSelect = `https://sp0.baidu.com/5a1Fazu8AA54nxGko9WTAnF6
 export const requestLogin = params => ajax(`${backendAPI}/login/lab`, params, 'POST');
 // 注销接口
 export const requestLogout = params => ajax(`${backendAPI}/logout`, params, 'POST');
+
 // 获取网关设备类型
 export const getIotGatewayType = params => ajax(`${backendAPI}/api/iot/gateway/type`, params, 'GET');
 // 获取网关分页列表
@@ -29,8 +30,22 @@ export const getIotGatewayPage = params => ajax(`${backendAPI}/api/iot/gateway`,
 export const addIotGateway = params => ajax(`${backendAPI}/api/iot/gateway`, params, 'POST');
 // 修改网关
 export const editIotGateway = params => ajax(`${backendAPI}/api/iot/gateway`, params, 'PUT');
-// 查询动态
-export const getNews = params => ajax(`${backendAPI}/api/message/news/show`, params, 'GET');
+// 删除网关
+export const deleteIotGateway = params => ajax(`${backendAPI}/api/iot/gateway`, params, 'DELETE');
+// 获取网关详情
+export const getIotGatewayEntity = params => ajax(`${backendAPI}/api/iot/gateway/${params}`, {}, 'GET');
+// 获取网关设备下拉选框
+export const getIotGatewayList = params => ajax(`${backendAPI}/api/iot/gatewayList`, params, 'GET');
+
+// 获取网关分页列表
+export const getIotClientPage = params => ajax(`${backendAPI}/api/iot/client`, params, 'GET');
+// 添加设备
+export const addIotClient = params => ajax(`${backendAPI}/api/iot/client`, params, 'POST');
+// 修改设备
+export const editIotClient = params => ajax(`${backendAPI}/api/iot/client`, params, 'PUT');
+// 删除设备
+export const deleteIotClient = params => ajax(`${backendAPI}/api/iot/client`, params, 'DELETE');
+
 // 修改动态
 export const editNews = params => ajax(`${backendAPI}/api/message/news/edit`, params, 'PUT');
 // 审核留言

@@ -10,6 +10,7 @@ import { Button, Menu, Popover, Avatar, Breadcrumb, Badge, Modal} from 'antd';
 import { FundProjectionScreenOutlined, NotificationOutlined,ToolOutlined, HistoryOutlined, MessageOutlined, DesktopOutlined,HomeOutlined,ExceptionOutlined,CodeOutlined,LaptopOutlined} from '@ant-design/icons';
 import DashBoard from '../../backend/dashboard'
 import Gateway from '../../backend/gateway'
+import Client from '../../backend/client'
 import {requestLogout} from "../../../api";
 /*
  * 文件名：index.jsx
@@ -296,6 +297,7 @@ class Backend1 extends Component {
                 <Switch>
                   <Route path='/backstage/api/mana' component={DashBoard}/>
                   <Route path='/backstage/device/gateway' component={Gateway}/>
+                  <Route path='/backstage/device/client' component={Client}/>
                   {/*默认、及匹配不到时的页面*/}
                   <Redirect to='/backstage/api/mana'/>
                 </Switch>

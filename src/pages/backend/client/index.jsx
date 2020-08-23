@@ -1,24 +1,35 @@
 import React, { Component } from 'react';
-import DocumentTitle from 'react-document-title'
-import {SearchOutlined, ReloadOutlined, PlusOutlined, EyeOutlined, EditOutlined, DeleteOutlined} from '@ant-design/icons';
-import {Row, Col, Form, Button, Table, DatePicker, Input, Select, Modal} from 'antd';
-import {getIotGatewayType, getIotGatewayPage, addIotGateway, deleteIotGateway} from '../../../api'
-import {openNotificationWithIcon} from '../../../utils/window'
-import {getGatewayEnableString} from '../../../utils/enum'
-import moment from 'moment';
+import DocumentTitle from "react-document-title";
 import "./index.less"
-import AddGateWay from "./insert"
-import EditGateWay from "./edit"
+import {Button, Col, DatePicker, Form, Input, Modal, Select, Table} from "antd";
+import {
+  DeleteOutlined,
+  EditOutlined,
+  EyeOutlined,
+  PlusOutlined,
+  ReloadOutlined,
+  SearchOutlined
+} from "@ant-design/icons";
+import moment from "moment";
+import {getClientEnableString, getGatewayEnableString, getClientLevelString} from "../../../utils/enum";
+import {
+  addIotClient,
+  getIotClientPage,
+  getIotGatewayEntity,
+  editIotClient,
+  deleteIotClient} from "../../../api";
+import {openNotificationWithIcon} from "../../../utils/window";
+import EditClient from "../client/edit";
 /*
  * 文件名：index.jsx
  * 作者：saya
- * 创建日期：2020/8/9 - 10:07 下午
- * 描述：
+ * 创建日期：2020/8/23 - 1:34 下午
+ * 描述：设备管理
  */
 const {RangePicker} = DatePicker;
 const {Option} = Select;
 // 定义组件（ES6）
-class Gateway extends Component {
+class Client extends Component {
 
   formRef = React.createRef();
 
@@ -38,14 +49,17 @@ class Gateway extends Component {
       date: null,
       beginTime: null,// 搜索表单的开始时间
       endTime: null,// 搜索表单的结束时间
-      code: '',// 网关编码
-      selectGatewayType: '',//用户选择的日志类别
+      name: '',// 设备名
       selectStatusType: ''//用户选择的状态类别
     },
-    gatewayType: [],// 系统返回的设备类别
     statusType: [],// 设备状态类别
     modalStatus: 0, // 标识添加/更新的确认框是否显示, 0: 都不显示, 1: 显示添加, 2: 显示更新, 3: 显示详情
+    lineDateGateway: {},// 网关详情，点击行详情按钮后保存
   };
+
+  constructor(props){
+    super(props)
+  }
 
   /*
   * 初始化Table所有列的数组
@@ -53,40 +67,40 @@ class Gateway extends Component {
   initColumns = () => {
     this.columns = [
       {
-        title: '网关名',
+        title: '设备ID',
+        dataIndex: 'id', // 显示数据对应的属性名
+      },
+      {
+        title: '设备名',
         dataIndex: 'name', // 显示数据对应的属性名
       },
       {
-        title: '网关编码',
-        dataIndex: 'code', // 显示数据对应的属性名
-      },
-      {
-        title: '认证编码',
+        title: '网关名',
         render: (text,record) => {
-            return record.authenInfo.username || null;
+          return record.gateway.name || null;
         }
       },
       {
-        title: '网关类型',
-        dataIndex: 'deviceTypeInfo', // 显示数据对应的属性名
+        title: '网关编码',
+        render: (text,record) => {
+          return record.gateway.code || null;
+        }
       },
       {
-        title: '地址',
-        dataIndex: 'address', // 显示数据对应的属性名
+        title: '网关地址',
+        render: (text,record) => {
+          return record.gateway.address || null;
+        }
       },
       {
         title: '是否启用',
         render: (text,record) => {
-          return getGatewayEnableString(record.authenInfo.enable)
+          return getClientEnableString(record.enable)
         }
       },
       {
-        title: '创建者',
-        dataIndex: 'source', // 显示数据对应的属性名
-      },
-      {
         title: '最后心跳',
-        dataIndex: 'lastHeartbeat', // 显示数据对应的属性名
+        dataIndex: 'lastLinkTime', // 显示数据对应的属性名
       },
       {
         title: '操作',
@@ -96,7 +110,7 @@ class Gateway extends Component {
             &nbsp;
             <Button type="primary" title="编辑" onClick={() => this.handleModalEdit(record)} shape="circle" icon={<EditOutlined/>}/>
             &nbsp;
-            <Button type="primary" title="删除" onClick={() => this.handleDellGateway(record)} shape="circle" icon={<DeleteOutlined />}/>
+            <Button type="primary" title="删除" onClick={() => this.handleDellClient(record)} shape="circle" icon={<DeleteOutlined />}/>
           </div>
         ),
       },
@@ -104,22 +118,31 @@ class Gateway extends Component {
   };
 
   /**
-   * 获取网关类别
+   * 获取网关数据
    * @returns {Promise<void>}
    */
-  getTypeData = async () => {
+  getDatas = async () => {
     let _this = this;
+    let para = {
+      nowPage: _this.state.nowPage,
+      pageSize: _this.state.pageSize,
+      name: _this.state.filters.name,
+      enable: _this.state.filters.selectStatusType,
+      beginTime: _this.state.filters.beginTime,
+      endTime: _this.state.filters.endTime,
+    };
+    // 在发请求前, 显示loading
+    _this.setState({listLoading: true});
     // 发异步ajax请求, 获取数据
-    const {msg, code, data} = await getIotGatewayType();
+    const {msg, code, data} = await getIotClientPage(para);
+    // 在请求完成后, 隐藏loading
+    _this.setState({listLoading: false});
     if (code === 0) {
-      // 利用更新状态的回调函数，渲染下拉选框
-      let gatewayType = [];
-      gatewayType.push((<Option key={-1} value="">请选择</Option>));
-      data.forEach(item => {
-        gatewayType.push((<Option key={item.id} value={item.id}>{item.name}</Option>));
-      });
       _this.setState({
-        gatewayType
+        // 总数据量
+        dataTotal: data.dateSum,
+        // 表格数据
+        datas: data.grid
       });
     } else {
       openNotificationWithIcon("error", "错误提示", msg);
@@ -141,47 +164,13 @@ class Gateway extends Component {
     });
   };
 
-  /**
-   * 获取网关数据
-   * @returns {Promise<void>}
-   */
-  getDatas = async () => {
-    let _this = this;
-    let para = {
-      nowPage: _this.state.nowPage,
-      pageSize: _this.state.pageSize,
-      code: _this.state.filters.code,
-      deviceType: _this.state.filters.selectGatewayType,
-      enable: _this.state.filters.selectStatusType,
-      beginTime: _this.state.filters.beginTime,
-      endTime: _this.state.filters.endTime,
-    };
-    // 在发请求前, 显示loading
-    _this.setState({listLoading: true});
-    // 发异步ajax请求, 获取数据
-    const {msg, code, data} = await getIotGatewayPage(para);
-    // 在请求完成后, 隐藏loading
-    _this.setState({listLoading: false});
-    if (code === 0) {
-      _this.setState({
-        // 总数据量
-        dataTotal: data.dateSum,
-        // 表格数据
-        datas: data.grid
-      });
-    } else {
-      openNotificationWithIcon("error", "错误提示", msg);
-    }
-  };
-
   reloadPage = () => {
     // 重置查询条件
     let _this = this;
     let filters = _this.state.filters;
     filters.beginTime = null;
     filters.endTime = null;
-    filters.code = '';
-    filters.selectGatewayType = '';
+    filters.name = '';
     filters.selectStatusType = '';
     _this.setState({
       nowPage: 1,
@@ -234,22 +223,6 @@ class Gateway extends Component {
   };
 
   /**
-   * 网关类别选框发生改变
-   * @param value
-   */
-  onChangeGatewayType = (value) => {
-    let _this = this;
-    let {filters} = _this.state;
-    filters.selectGatewayType = value;
-    _this.setState({
-      filters,
-      nowPage: 1,
-    }, function () {
-      _this.getDatas()
-    });
-  };
-
-  /**
    * 网关状态选框发生改变
    * @param value
    */
@@ -273,16 +246,36 @@ class Gateway extends Component {
     let _this = this;
     const value = event.target.value;
     let filters = _this.state.filters;
-    filters.code = value;
+    filters.name = value;
     _this.setState({
       nowPage: 1,
       filters
     })
   };
 
+  /**
+   * 获取网关详情数据
+   * @returns {Promise<void>}
+   */
+  getGateWayDatas = async (id) => {
+    // 发异步ajax请求, 获取数据
+    // 在发请求前, 显示loading
+    this.setState({listLoading: true, lineDateGateway: {}});
+    const {msg, code, data} = await getIotGatewayEntity(id);
+    // 在请求完成后, 隐藏loading
+    this.setState({listLoading: false});
+    if (code === 0) {
+      this.setState({
+        lineDateGateway: data
+      })
+    } else {
+      openNotificationWithIcon("error", "错误提示", msg);
+    }
+  };
+
   /*
-    * 显示添加的弹窗
-    */
+  * 显示添加的弹窗
+  */
   handleModalAdd = () => {
     this.setState({
       modalStatus: 1
@@ -293,14 +286,7 @@ class Gateway extends Component {
   * 显示修改的弹窗
   */
   handleModalEdit = (value) => {
-    this.lineDate = {
-      "id": value.id,
-      "gatewayEnable":value.authenInfo.enable.toString(),
-      "gatewayCode":value.code,
-      "gatewayName":value.name,
-      "gatewayAddress":value.address,
-      "gatewayType":value.deviceType
-    };
+    this.lineDate = value;
     this.setState({
       modalStatus: 2
     })
@@ -310,7 +296,8 @@ class Gateway extends Component {
   * 显示详情的弹窗
   */
   handleModalInfo = (value) => {
-    this.lineDate = value
+    this.lineDate = value;
+    this.getGateWayDatas(value.gatewayId);
     this.setState({
       modalStatus: 3
     })
@@ -331,21 +318,19 @@ class Gateway extends Component {
   };
 
   /**
-   * 提交表单，添加网关设备
+   * 提交表单，添加设备
    */
-  handleAddGateWay = (e) => {
+  handleAddClient = (e) => {
     e.preventDefault();
     let _this = this;
-    _this.formRef.current.formRef.current.validateFields(["authenPassword","gatewayCode","gatewayName","gatewayAddress","gatewayType"])
+    _this.formRef.current.formRef.current.validateFields(["gatewayId","name","enable"])
       .then(async (values) => {
         let para = {
-          code: values.gatewayCode,
-          name: values.gatewayName,
-          address: values.gatewayAddress,
-          deviceType: values.gatewayType,
-          authenInfo: {password:values.authenPassword}
+          gatewayId: values.gatewayId,
+          name: values.name,
+          enable: values.enable,
         }
-        const {msg, code} = await addIotGateway(para)
+        const {msg, code} = await addIotClient(para)
         _this.setState({listLoading: false});
         if (code === 0) {
           openNotificationWithIcon("success", "操作结果", "添加成功");
@@ -359,23 +344,55 @@ class Gateway extends Component {
           openNotificationWithIcon("error", "错误提示", msg);
         }
       }).catch(errorInfo => {
-        console.log(errorInfo)
-      });
+      console.log(errorInfo)
+    });
+  }
+
+  /**
+   * 提交表单，修改设备
+   */
+  handleEditClient = (e) => {
+    e.preventDefault();
+    let _this = this;
+    _this.formRef.current.formRef.current.validateFields(["gatewayId","name","enable"])
+      .then(async (values) => {
+        let para = {
+          id: this.lineDate.id,
+          gatewayId: values.gatewayId,
+          name: values.name,
+          enable: values.enable,
+        }
+        const {msg, code} = await editIotClient(para)
+        _this.setState({listLoading: false});
+        if (code === 0) {
+          openNotificationWithIcon("success", "操作结果", "修改成功");
+          // 重置表单
+          _this.formRef.current.formRef.current.resetFields();
+          // 关闭弹窗
+          _this.handleModalCancel(true)
+          // 重新加载数据
+          _this.getDatas();
+        } else {
+          openNotificationWithIcon("error", "错误提示", msg);
+        }
+      }).catch(errorInfo => {
+      console.log(errorInfo)
+    });
   }
 
   /*
-  * 删除指定网关
+  * 删除指定设备
   */
-  handleDellGateway = (value) => {
+  handleDellClient= (value) => {
     let _this = this;
     Modal.confirm({
       title: '删除确认',
-      content: `确认删除名字为:"${value.name}"的网关吗?一旦删除，该网关下面的所有设备将无法使用`,
+      content: `确认删除名字为:"${value.name}"的设备吗?一旦删除，设备将无法向平台上报数据，平台也无法向设备发送指令！`,
       onOk: async () => {
         // 在发请求前, 显示loading
         _this.setState({listLoading: true});
         let para = { id: value.id };
-        const {msg, code} = await deleteIotGateway(para);
+        const {msg, code} = await deleteIotClient(para);
         // 在请求完成后, 隐藏loading
         _this.setState({listLoading: false});
         if (code === 0) {
@@ -393,8 +410,6 @@ class Gateway extends Component {
    * 因为要异步加载数据，所以方法改为async执行
    */
   componentWillMount() {
-    // 初始化网关类别数据
-    this.getTypeData();
     // 初始化表格属性设置
     this.initColumns();
     // 初始化设备状态数
@@ -409,13 +424,11 @@ class Gateway extends Component {
     this.getDatas();
   };
 
-
-
   render() {
     // 读取状态数据
-    const {datas, dataTotal, nowPage, pageSize, listLoading,filters, gatewayType,statusType, modalStatus} = this.state;
+    const {datas, dataTotal, nowPage, pageSize, listLoading,filters,statusType, modalStatus, lineDateGateway} = this.state;
     // 读取所选中的行数据
-    const gateWay = this.lineDate || {}; // 如果还没有指定一个空对象
+    const lineDate = this.lineDate || {}; // 如果还没有指定一个空对象
     let {beginTime,endTime} = filters;
     let rangeDate;
     if (beginTime !== null && endTime !== null){
@@ -424,23 +437,17 @@ class Gateway extends Component {
       rangeDate = [null,null]
     }
     return (
-      <DocumentTitle title='物联网智慧家庭·网关管理'>
-        <section className="gateWay-v1">
+      <DocumentTitle title='物联网智慧家庭·设备管理'>
+        <section className="client-v1">
           <Col span={24} className="toolbar">
             <Form layout="inline">
-              <Form.Item label="网关编码">
-                <Input type='text' value={filters.code} onChange={this.codeInputChange}
-                       placeholder='按网关编码检索'/>
-                </Form.Item>
-              <Form.Item label="网关类型">
-                <Select value={filters.selectGatewayType} className="queur-type" showSearch onChange={this.onChangeGatewayType}
-                        placeholder="请选择网关类型">
-                  {gatewayType}
-                </Select>
+              <Form.Item label="设备名">
+                <Input type='text' value={filters.name} onChange={this.codeInputChange}
+                       placeholder='按设备名检索'/>
               </Form.Item>
-              <Form.Item label="网关状态">
+              <Form.Item label="设备状态">
                 <Select value={filters.selectStatusType} className="queur-type" showSearch onChange={this.onChangeStatusType}
-                        placeholder="请选择网关状态">
+                        placeholder="请选择设备状态">
                   {statusType}
                 </Select>
               </Form.Item>
@@ -475,77 +482,96 @@ class Gateway extends Component {
                    }}/>
           </Col>
           <Modal
-            title="添加网关"
+            title="添加设备"
             width="50%"
             visible={modalStatus === 1}
-            onOk={this.handleAddGateWay}
+            closable={true}
             maskClosable={false}
-            onCancel={()=>this.handleModalCancel(true)}>
-            <AddGateWay ref={this.formRef} gateWay={{}}/>
+            onOk={this.handleAddClient}
+            onCancel={()=>this.handleModalCancel(false)}>
+            <EditClient ref={this.formRef} client={{}}/>
           </Modal>
           <Modal
-            title="修改网关"
+            title="修改设备"
             width="50%"
             visible={modalStatus === 2}
             closable={true}
-            footer={null}
             maskClosable={false}
+            onOk={this.handleEditClient}
             onCancel={()=>this.handleModalCancel(false)}>
-            <EditGateWay ref={this.formRef} gateWay={gateWay}/>
+            <EditClient ref={this.formRef} client={this.lineDate || {}}/>
           </Modal>
           <Modal
-            title="网关详情"
-            className="gateWay-v1-modal-info"
+            title="设备详情"
+            className="client-v1-modal-info"
             width="50%"
             visible={modalStatus === 3}
             closable={true}
             footer={null}
             maskClosable={false}
             onCancel={()=>this.handleModalCancel(false)}>
-              <table>
-                <caption>{gateWay.name || "-"}</caption>
-                <colgroup>
-                  <col width="10%"/>
-                  <col width="10%"/>
-                  <col width="10%"/>
-                  <col width="10%"/>
-                  <col width="10%"/>
-                  <col width="10%"/>
-                  <col width="10%"/>
-                  <col width="10%"/>
-                  <col width="10%"/>
-                  <col width="10%"/>
-                </colgroup>
-                <tbody>
-                  <tr>
-                    <td className="label">网关ID</td>
-                    <td className="value">{gateWay.id || "-"}</td>
-                    <td className="label">网关编码</td>
-                    <td colSpan="3" className="value">{gateWay.code || "-"}</td>
-                    <td className="label">认证编码</td>
-                    <td colSpan="3" className="value">{!gateWay.authenInfo?"-":gateWay.authenInfo.username}</td>
-                  </tr>
-                  <tr>
-                    <td className="label">网关类型</td>
-                    <td className="value">{gateWay.deviceTypeInfo || "-"}</td>
-                    <td className="label">接入状态</td>
-                    <td className="value">{!gateWay.authenInfo?"-":getGatewayEnableString(gateWay.authenInfo.enable)}</td>
-                    <td className="label">创建者</td>
-                    <td className="value">{gateWay.source || "-"}</td>
-                    <td className="label">网关地址</td>
-                    <td className="value" colSpan="3" >{gateWay.address || "-"}</td>
-                  </tr>
-                  <tr>
-                    <td className="label" colSpan="2">最后一次心跳时间</td>
-                    <td className="value" colSpan="2">{gateWay.lastHeattbeat || "-"}</td>
-                    <td className="label">创建时间</td>
-                    <td className="value" colSpan="2">{gateWay.createTime || "-"}</td>
-                    <td className="label">修改时间</td>
-                    <td className="value" colSpan="2">{gateWay.updateTime || "-"}</td>
-                  </tr>
-                </tbody>
-              </table>
-              <div className="print-time">若数据显示异常，请重新打开&nbsp;&nbsp;&nbsp;&nbsp;平台打印时间：{moment().format("YYYY-MM-DD HH:mm:ss") }</div>
+            <table>
+              <caption>{lineDate.name || "-"}</caption>
+              <colgroup>
+                <col width="10%"/>
+                <col width="10%"/>
+                <col width="10%"/>
+                <col width="10%"/>
+                <col width="10%"/>
+                <col width="10%"/>
+                <col width="10%"/>
+                <col width="10%"/>
+                <col width="10%"/>
+                <col width="10%"/>
+              </colgroup>
+              <tbody>
+                <tr>
+                  <td className="label">设备ID</td>
+                  <td className="value">{lineDate.id || "-"}</td>
+                  <td className="label">启用状态</td>
+                  <td className="value">{!lineDate.enable?"-":getClientEnableString(lineDate.enable)}</td>
+                  <td className="label">电平状态</td>
+                  <td className="value">{!lineDate.level?"-":getClientLevelString(lineDate.level)}</td>
+                  <td className="label">网关名</td>
+                  <td colSpan="3" className="value">{lineDateGateway.name || "-"}</td>
+                </tr>
+                <tr>
+                  <td className="label">网关ID</td>
+                  <td className="value">{lineDateGateway.id || "-"}</td>
+                  <td className="label">网关编码</td>
+                  <td colSpan="3" className="value">{lineDateGateway.code || "-"}</td>
+                  <td className="label">认证编码</td>
+                  <td colSpan="3" className="value">{!lineDateGateway.authenInfo?"-":lineDateGateway.authenInfo.username}</td>
+                </tr>
+                <tr>
+                  <td className="label">网关类型</td>
+                  <td className="value">{lineDateGateway.deviceTypeInfo || "-"}</td>
+                  <td className="label">接入状态</td>
+                  <td className="value">{!lineDateGateway.authenInfo?"-":getGatewayEnableString(lineDateGateway.authenInfo.enable)}</td>
+                  <td className="label">创建者</td>
+                  <td className="value">{lineDateGateway.source || "-"}</td>
+                  <td className="label">网关地址</td>
+                  <td className="value" colSpan="3" >{lineDateGateway.address || "-"}</td>
+                </tr>
+                <tr>
+                  <td className="label" colSpan="2">网关最后一次心跳时间</td>
+                  <td className="value" colSpan="2">{lineDateGateway.lastHeattbeat || "-"}</td>
+                  <td className="label">网关创建时间</td>
+                  <td className="value" colSpan="2">{lineDateGateway.createTime || "-"}</td>
+                  <td className="label">网关修改时间</td>
+                  <td className="value" colSpan="2">{lineDateGateway.updateTime || "-"}</td>
+                </tr>
+                <tr>
+                  <td className="label" colSpan="2">设备最后一次心跳时间</td>
+                  <td className="value" colSpan="2">{lineDate.lastLinkTime || "-"}</td>
+                  <td className="label">设备创建时间</td>
+                  <td className="value" colSpan="2">{lineDate.createTime || "-"}</td>
+                  <td className="label">设备修改时间</td>
+                  <td className="value" colSpan="2">{lineDate.updateTime || "-"}</td>
+                </tr>
+              </tbody>
+            </table>
+            <div className="print-time">若数据显示异常，请重新打开&nbsp;&nbsp;&nbsp;&nbsp;平台打印时间：{moment().format("YYYY-MM-DD HH:mm:ss") }</div>
           </Modal>
         </section>
       </DocumentTitle>
@@ -554,4 +580,4 @@ class Gateway extends Component {
 }
 
 // 对外暴露
-export default Gateway;
+export default Client;
