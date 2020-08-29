@@ -239,10 +239,10 @@ class Client extends Component {
   };
 
   /**
-   * 双向绑定用户查询网关编码
+   * 双向绑定用户查询设备名
    * @param event
    */
-  codeInputChange = (event) => {
+  nameInputChange = (event) => {
     let _this = this;
     const value = event.target.value;
     let filters = _this.state.filters;
@@ -442,7 +442,7 @@ class Client extends Component {
           <Col span={24} className="toolbar">
             <Form layout="inline">
               <Form.Item label="设备名">
-                <Input type='text' value={filters.name} onChange={this.codeInputChange}
+                <Input type='text' value={filters.name} onChange={this.nameInputChange}
                        placeholder='按设备名检索'/>
               </Form.Item>
               <Form.Item label="设备状态">
