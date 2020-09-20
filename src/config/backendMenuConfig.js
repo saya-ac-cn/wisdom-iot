@@ -52,8 +52,8 @@ const backstageMenuList = [
         requireAuth: true, // 是否需要登录后访问
         children: [ // 子菜单列表
             {
-                title: '预约控制',
-                key: '/backstage/message/guestbook',
+                title: '预约管理',
+                key: '/backstage/device/appointment',
                 hidden: false,
                 requireAuth: true
             },

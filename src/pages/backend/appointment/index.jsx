@@ -10,14 +10,18 @@ import {
   SearchOutlined
 } from "@ant-design/icons";
 import moment from "moment";
-
+import './index.less'
+import {getIotAppointmentPage,addIotAppointment,editIotAppointment,deleteIotAppointment} from "../../../api";
+import {openNotificationWithIcon} from "../../../utils/window";
+import {getAppointmentExcuteStatusString} from "../../../utils/enum";
 /*
  * 文件名：index.jsx
  * 作者：saya
  * 创建日期：2020/8/29 - 10:32 下午
  * 描述：
  */
-
+const {RangePicker} = DatePicker;
+const {Option} = Select;
 // 定义组件（ES6）
 class Appointment extends Component {
 
@@ -39,20 +43,77 @@ class Appointment extends Component {
       date: null,
       beginTime: null,// 搜索表单的开始时间
       endTime: null,// 搜索表单的结束时间
-      name: '',// 规则名
-      clientId: null,// 终端id
+      name: '',// 预约名
       selectStatusType: ''//用户选择的状态类别
     },
-    statusType: [],// 设备状态类别
+    statusType: [],// 指令下发状态类别
     modalStatus: 0, // 标识添加/更新的确认框是否显示, 0: 都不显示, 1: 显示添加, 2: 显示更新, 3: 显示详情
   };
 
-  constructor(props){
-    super(props)
-  }
+  /*
+  * 初始化Table所有列的数组
+  */
+  initColumns = () => {
+    this.columns = [
+      {
+        title: '预约名',
+        dataIndex: 'name', // 显示数据对应的属性名
+      },
+      {
+        title: '网关名',
+        render: (text,record) => {
+          return record.iotClient.gateway.name || null;
+        }
+      },
+      {
+        title: '设备名',
+        render: (text,record) => {
+          return record.iotClient.name || null;
+        }
+      },
+      {
+        title: '地址',
+        render: (text,record) => {
+          return record.iotClient.gateway.address || null;
+        }
+      },
+      {
+        title: '执行指令',
+        dataIndex: 'command', // 显示数据对应的属性名
+      },
+      {
+        title: '执行时间',
+        dataIndex: 'excuteTime', // 显示数据对应的属性名
+      },
+      {
+        title: '执行状态',
+        render: (text,record) => {
+          return getAppointmentExcuteStatusString(record.status)
+        }
+      },
+      {
+        title: '最后心跳',
+        render: (text,record) => {
+          return record.iotClient.lastLinkTime || null;
+        }
+      },
+      {
+        title: '操作',
+        render: (text, record) => (
+          <div>
+            <Button type="primary" title="查看" onClick={() => this.handleModalInfo(record)} shape="circle" icon={<EyeOutlined/>}/>
+            &nbsp;
+            <Button type="primary" title="编辑" onClick={() => this.handleModalEdit(record)} shape="circle" icon={<EditOutlined/>}/>
+            &nbsp;
+            <Button type="primary" title="删除" onClick={() => this.handleDellGateway(record)} shape="circle" icon={<DeleteOutlined />}/>
+          </div>
+        ),
+      },
+    ]
+  };
 
   /**
-   * 初始化设备状态下拉选择
+   * 预约下发状态
    */
   initStatusSelect = () => {
     let _this = this;
@@ -63,6 +124,54 @@ class Appointment extends Component {
     ];
     _this.setState({
       statusType
+    });
+  };
+
+  /**
+   * 获取网关数据
+   * @returns {Promise<void>}
+   */
+  getDatas = async () => {
+    let _this = this;
+    let para = {
+      nowPage: _this.state.nowPage,
+      pageSize: _this.state.pageSize,
+      name: _this.state.filters.name,
+      status: _this.state.filters.selectStatusType,
+      beginTime: _this.state.filters.beginTime,
+      endTime: _this.state.filters.endTime,
+    };
+    // 在发请求前, 显示loading
+    _this.setState({listLoading: true});
+    // 发异步ajax请求, 获取数据
+    const {msg, code, data} = await getIotAppointmentPage(para);
+    // 在请求完成后, 隐藏loading
+    _this.setState({listLoading: false});
+    if (code === 0) {
+      _this.setState({
+        // 总数据量
+        dataTotal: data.dateSum,
+        // 表格数据
+        datas: data.grid
+      });
+    } else {
+      openNotificationWithIcon("error", "错误提示", msg);
+    }
+  };
+
+  reloadPage = () => {
+    // 重置查询条件
+    let _this = this;
+    let filters = _this.state.filters;
+    filters.beginTime = null;
+    filters.endTime = null;
+    filters.name = '';
+    filters.selectStatusType = '';
+    _this.setState({
+      nowPage: 1,
+      filters: filters
+    }, function () {
+      _this.getDatas()
     });
   };
 
@@ -128,9 +237,9 @@ class Appointment extends Component {
    */
   componentWillMount() {
     // 初始化表格属性设置
-    //this.initColumns();
+    this.initColumns();
     // 初始化设备状态数
-    //this.initStatusSelect()
+    this.initStatusSelect()
   };
 
   /*
@@ -138,12 +247,12 @@ class Appointment extends Component {
    */
   componentDidMount() {
     // 加载页面数据
-    //this.getDatas();
+    this.getDatas();
   };
 
   render() {
     // 读取状态数据
-    const {datas, dataTotal, nowPage, pageSize, listLoading,filters,statusType, modalStatus, lineDateGateway} = this.state;
+    const {datas, dataTotal, nowPage, pageSize, listLoading,filters,statusType, modalStatus} = this.state;
     // 读取所选中的行数据
     const lineDate = this.lineDate || {}; // 如果还没有指定一个空对象
     let {beginTime,endTime} = filters;
@@ -187,6 +296,16 @@ class Appointment extends Component {
                 </Button>
               </Form.Item>
             </Form>
+          </Col>
+          <Col span={24} className="dataTable">
+            <Table size="middle" rowKey="id" loading={listLoading} columns={this.columns} dataSource={datas}
+                   pagination={{
+                     current:nowPage,
+                     showTotal: () => `当前第${nowPage}页 共${dataTotal}条`,
+                     pageSize: pageSize, showQuickJumper: true, total: dataTotal, showSizeChanger: true,
+                     onShowSizeChange: (current, pageSize) => this.changePageSize(pageSize, current),
+                     onChange: this.changePage,
+                   }}/>
           </Col>
         </section>
       </DocumentTitle>

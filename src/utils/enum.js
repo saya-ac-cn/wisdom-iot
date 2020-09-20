@@ -44,3 +44,18 @@ export const getClientLevelString = (key) => {
     return '-'
   }
 }
+
+/**
+ * 获取预约指令执行状态
+ * @param key
+ * @returns {*}
+ */
+export const getAppointmentExcuteStatusString = (key) => {
+  if (key === 1){
+    return '已创建'
+  } else if (key === 2) {
+    return '已下发'
+  } else {
+    return '-'
+  }
+}

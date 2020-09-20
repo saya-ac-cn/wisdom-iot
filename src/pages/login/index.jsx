@@ -45,7 +45,8 @@ class Login extends Component {
     pwdState: false,
     // 给用户输入的文本框和密码框
     userName: 'Pandora',
-    passWord: 'Pandora'
+    passWord: 'Pandora',
+    loading: false
   };
 
 
@@ -128,8 +129,10 @@ class Login extends Component {
       return
     }
     let loginParams = {user: userName, password: passWord};
+    _this.setState({loading: true});
     const result = await requestLogin(loginParams);
     let {code, data} = result;
+    _this.setState({loading: false});
     if (code === 0) {
       memoryUtils.user = data;// 保存在内存中
       storageUtils.saveUser(data); // 保存到local中
@@ -144,7 +147,7 @@ class Login extends Component {
 
   render() {
     // 读取状态数据
-    const {userState, pwdState, userName, passWord} = this.state;
+    const {userState, pwdState, userName, passWord,loading} = this.state;
     return (
       <DocumentTitle title='物联网智慧家庭·统一身份认证入口'>
         <div className="login-register-container"
@@ -165,7 +168,7 @@ class Login extends Component {
                 <span className="spin" style={pwdState ? activeSpin : unactiveSpin}></span>
               </div>
               <div className="button login">
-                <Button type="text" onClick={this.loginHandle}>登录</Button>
+                <Button type="text" onClick={this.loginHandle} loading={loading}>登录</Button>
               </div>
               <Button type="link" className="pass-forgot">
                 忘记密码？

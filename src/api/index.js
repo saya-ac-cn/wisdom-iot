@@ -42,3 +42,11 @@ export const editIotClient = params => ajax(`${backendAPI}/api/iot/client`, para
 // 删除设备
 export const deleteIotClient = params => ajax(`${backendAPI}/api/iot/client`, params, 'DELETE');
 
+// 指令预约
+export const getIotAppointmentPage = params => ajax(`${backendAPI}/api/iot/appointment`, params, 'GET');
+// 添加预约
+export const addIotAppointment = params => ajax(`${backendAPI}/api/iot/appointment`, params, 'POST');
+// 修改预约
+export const editIotAppointment = params => ajax(`${backendAPI}/api/iot/appointment`, params, 'PUT');
+// 删除预约
+export const deleteIotAppointment = params => ajax(`${backendAPI}/api/iot/appointment`, params, 'DELETE');
