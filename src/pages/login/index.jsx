@@ -128,7 +128,7 @@ class Login extends Component {
       message.error('请输入用户名和密码');
       return
     }
-    let loginParams = {user: userName, password: passWord};
+    let loginParams = {account: userName, password: passWord};
     _this.setState({loading: true});
     const result = await requestLogin(loginParams);
     let {code, data} = result;

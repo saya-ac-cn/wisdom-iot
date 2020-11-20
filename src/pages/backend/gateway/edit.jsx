@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types'
-import {Form, Input, Card, Tooltip, Select, Button} from "antd";
+import {Form, Input, Card, Tooltip, Select, Button,Radio} from "antd";
 import {QuestionCircleOutlined} from '@ant-design/icons';
 import {getIotGatewayType, editIotGateway} from '../../../api'
 import {openNotificationWithIcon} from "../../../utils/window";
@@ -22,24 +22,9 @@ class EditGateWay extends Component {
 
   state = {
     gatewayType: [],// 系统返回的设备类别
-    statusType: [],// 设备状态类别
     infoLoading: false,// 提交修改网关信息后，按钮显示加载样式
     passwordLoading: false// 提交修改密码后，按钮显示加载样式
   }
-
-  /**
-   * 初始化设备状态下拉选择
-   */
-  initStatusSelect = () => {
-    let _this = this;
-    let statusType = [
-      (<Option key={1} value="1">已启用</Option>),
-      (<Option key={2} value="2">已禁用</Option>),
-    ];
-    _this.setState({
-      statusType
-    });
-  };
 
   /**
    * 获取网关类别
@@ -105,14 +90,14 @@ class EditGateWay extends Component {
     e.preventDefault();
     let _this = this;
     let {gateWay} = _this.props;
-    _this.formRef.current.validateFields(["gatewayEnable","gatewayCode","gatewayName","gatewayAddress","gatewayType"])
+    _this.formRef.current.validateFields(["gatewayEnable","authenUserName","gatewayName","gatewayAddress","gatewayType"])
       .then( async (values) => {
         let para = {
           id: gateWay.id,
           name: values.gatewayName,
           address: values.gatewayAddress,
           deviceType: values.gatewayType,
-          authenInfo: {enable:values.gatewayEnable}
+          authenInfo: {username:values.authenUserName,enable:values.gatewayEnable}
         }
         _this.setState({infoLoading: true});
         const {msg, code} = await editIotGateway(para);
@@ -130,8 +115,6 @@ class EditGateWay extends Component {
   componentWillMount () {
     // 初始化网关类别数据
     this.getTypeData();
-    // 初始化设备状态数
-    this.initStatusSelect()
     this.formItemLayout = {
       labelCol: {span: 4},
       wrapperCol: {span: 14},
@@ -143,16 +126,21 @@ class EditGateWay extends Component {
 
   render() {
     const {gateWay} = this.props;
-    const {gatewayType, statusType, passwordLoading, infoLoading} = this.state;
+    const {gatewayType, passwordLoading, infoLoading} = this.state;
     const user = memoryUtils.user;
     // 如果内存没有存储user ==> 当前没有登陆
-    if (!user || !user.user) {
+    if (!user || !user.account) {
       // 自动跳转到登陆(在render()中)
       return <Redirect to='/login'/>
     }
     return (
       <Form {...this.formItemLayout} ref={this.formRef}>
         <Card title="接入凭证" bordered={false}>
+          <Form.Item label={<span>设备名称&nbsp;<Tooltip title="设备名称是您的设备在平台中的唯一标识，用于连接时授权认证"><QuestionCircleOutlined /></Tooltip></span>}
+                     name="authenUserName" initialValue={gateWay.authenUserName || `iot-${(user.account)}-${new Date().getTime()}`}  getValueFromEvent={ (e) => clearTrimValueEvent(e)}
+                     rules={[{required: true, message: '请输入设备名称'},{min: 6, message: '长度在 6 到 30 个字符'},{max: 30, message: '长度在 6 到 30 个字符'}]} {...this.formItemLayout}>
+            <Input disabled={true} placeholder='请输入设备名称'/>
+          </Form.Item>
           <Form.Item label={<span>认证密钥&nbsp;<Tooltip title="认证密钥将作为您的网关连接服务器的凭证，每个网关都有独立的认证密钥"><QuestionCircleOutlined /></Tooltip></span>}
             name="authenPassword" initialValue={gateWay.authenPassword || ""} getValueFromEvent={ (e) => clearTrimValueEvent(e)}
                      rules={[{required: true, message: '请输入认证密钥'},{min: 6, message: '长度在 6 到 15 个字符'},{max: 15, message: '长度在 6 到 15 个字符'}]} {...this.formItemLayout}>
@@ -166,15 +154,11 @@ class EditGateWay extends Component {
         </Card>
         <Card title="网关信息" bordered={false}>
           <Form.Item label={<span>是否启用&nbsp;<Tooltip title="网关是否可以连接服务器进行认证"><QuestionCircleOutlined /></Tooltip></span>}
-                     name="gatewayEnable" initialValue={gateWay.gatewayEnable || "1"}  rules={[{required: true, message: '请选择是否启用'}]} {...this.formItemLayout}>
-            <Select placeholder="请选择网关状态" allowClear>
-              {statusType}
-            </Select>
-          </Form.Item>
-          <Form.Item label={<span>网关编码&nbsp;<Tooltip title="网关编码是您的设备在平台中的唯一表示"><QuestionCircleOutlined /></Tooltip></span>}
-             name="gatewayCode" initialValue={gateWay.gatewayCode || `IOT${(user.user.user).toUpperCase()}${new Date().getTime()}`}  getValueFromEvent={ (e) => clearTrimValueEvent(e)}
-                     rules={[{required: true, message: '请输入网关编码'},{min: 6, message: '长度在 6 到 30 个字符'},{max: 30, message: '长度在 6 到 30 个字符'}]} {...this.formItemLayout}>
-            <Input disabled={true} placeholder='请输入网关编码'/>
+                     name="gatewayEnable" initialValue={gateWay.gatewayEnable || 1}  rules={[{required: true, message: '请选择是否启用'}]} {...this.formItemLayout}>
+            <Radio.Group>
+              <Radio value={1}>已启用</Radio>
+              <Radio value={2}>已禁用</Radio>
+            </Radio.Group>
           </Form.Item>
           <Form.Item label="网关名："  name="gatewayName" initialValue={gateWay.gatewayName || ""}  getValueFromEvent={ (e) => clearTrimValueEvent(e)}
              rules={[{required: true, message: '请输入网关名'},{min: 6, message: '长度在 6 到 20 个字符'},{max: 20, message: '长度在 6 到 20 个字符'}]} {...this.formItemLayout}>

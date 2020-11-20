@@ -58,7 +58,7 @@ class Gateway extends Component {
       },
       {
         title: '网关编码',
-        dataIndex: 'code', // 显示数据对应的属性名
+        dataIndex: 'uuid', // 显示数据对应的属性名
       },
       {
         title: '认证编码',
@@ -295,8 +295,8 @@ class Gateway extends Component {
   handleModalEdit = (value) => {
     this.lineDate = {
       "id": value.id,
-      "gatewayEnable":value.authenInfo.enable.toString(),
-      "gatewayCode":value.code,
+      "gatewayEnable":value.authenInfo.enable,
+      "authenUserName":value.authenInfo.username,
       "gatewayName":value.name,
       "gatewayAddress":value.address,
       "gatewayType":value.deviceType
@@ -336,14 +336,13 @@ class Gateway extends Component {
   handleAddGateWay = (e) => {
     e.preventDefault();
     let _this = this;
-    _this.formRef.current.formRef.current.validateFields(["authenPassword","gatewayCode","gatewayName","gatewayAddress","gatewayType"])
+    _this.formRef.current.formRef.current.validateFields(["authenPassword","authenUserName","gatewayName","gatewayAddress","gatewayType"])
       .then(async (values) => {
         let para = {
-          code: values.gatewayCode,
           name: values.gatewayName,
           address: values.gatewayAddress,
           deviceType: values.gatewayType,
-          authenInfo: {password:values.authenPassword}
+          authenInfo: {username:values.authenUserName,password:values.authenPassword}
         }
         const {msg, code} = await addIotGateway(para)
         _this.setState({listLoading: false});
@@ -521,8 +520,8 @@ class Gateway extends Component {
                     <td className="label">网关ID</td>
                     <td className="value">{gateWay.id || "-"}</td>
                     <td className="label">网关编码</td>
-                    <td colSpan="3" className="value">{gateWay.code || "-"}</td>
-                    <td className="label">认证编码</td>
+                    <td colSpan="3" className="value">{gateWay.uuid || "-"}</td>
+                    <td className="label">认证名称</td>
                     <td colSpan="3" className="value">{!gateWay.authenInfo?"-":gateWay.authenInfo.username}</td>
                   </tr>
                   <tr>

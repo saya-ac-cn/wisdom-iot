@@ -14,39 +14,41 @@ let publicAPI = '/frontend';
 let frontendAPI = publicAPI + '/Pandora';
 
 // 登录接口
-export const requestLogin = params => ajax(`${backendAPI}/login/lab`, params, 'POST');
+export const requestLogin = params => ajax(`${backendAPI}/login`, params, 'POST');
 // 注销接口
 export const requestLogout = params => ajax(`${backendAPI}/logout`, params, 'POST');
 
 // 获取网关设备类型
-export const getIotGatewayType = params => ajax(`${backendAPI}/api/iot/gateway/type`, params, 'GET');
+export const getIotGatewayType = params => ajax(`${backendAPI}/gateway/type`, params, 'GET');
 // 获取网关分页列表
-export const getIotGatewayPage = params => ajax(`${backendAPI}/api/iot/gateway`, params, 'GET');
+export const getIotGatewayPage = params => ajax(`${backendAPI}/gateway`, params, 'GET');
 // 添加网关
-export const addIotGateway = params => ajax(`${backendAPI}/api/iot/gateway`, params, 'POST');
+export const addIotGateway = params => ajax(`${backendAPI}/gateway`, params, 'POST');
 // 修改网关
-export const editIotGateway = params => ajax(`${backendAPI}/api/iot/gateway`, params, 'PUT');
+export const editIotGateway = params => ajax(`${backendAPI}/gateway`, params, 'PUT');
 // 删除网关
-export const deleteIotGateway = params => ajax(`${backendAPI}/api/iot/gateway`, params, 'DELETE');
+export const deleteIotGateway = params => ajax(`${backendAPI}/gateway`, params, 'DELETE');
 // 获取网关详情
-export const getIotGatewayEntity = params => ajax(`${backendAPI}/api/iot/gateway/${params}`, {}, 'GET');
+export const getIotGatewayEntity = params => ajax(`${backendAPI}/gateway/${params}`, {}, 'GET');
 // 获取网关设备下拉选框
-export const getIotGatewayList = params => ajax(`${backendAPI}/api/iot/gatewayList`, params, 'GET');
+export const getIotGatewayList = params => ajax(`${backendAPI}/gatewayList`, params, 'GET');
 
-// 获取网关分页列表
-export const getIotClientPage = params => ajax(`${backendAPI}/api/iot/client`, params, 'GET');
+// 获取设备分页列表
+export const getIotClientPage = params => ajax(`${backendAPI}/client`, params, 'GET');
 // 添加设备
-export const addIotClient = params => ajax(`${backendAPI}/api/iot/client`, params, 'POST');
+export const addIotClient = params => ajax(`${backendAPI}/client`, params, 'POST');
 // 修改设备
-export const editIotClient = params => ajax(`${backendAPI}/api/iot/client`, params, 'PUT');
+export const editIotClient = params => ajax(`${backendAPI}/client`, params, 'PUT');
 // 删除设备
-export const deleteIotClient = params => ajax(`${backendAPI}/api/iot/client`, params, 'DELETE');
+export const deleteIotClient = params => ajax(`${backendAPI}/client`, params, 'DELETE');
+// 获取设备下拉选框
+export const getClientSelectList = params => ajax(`${backendAPI}/client/select`, params, 'GET');
 
 // 指令预约
-export const getIotAppointmentPage = params => ajax(`${backendAPI}/api/iot/appointment`, params, 'GET');
+export const getIotAppointmentPage = params => ajax(`${backendAPI}/appointment`, params, 'GET');
 // 添加预约
-export const addIotAppointment = params => ajax(`${backendAPI}/api/iot/appointment`, params, 'POST');
+export const addIotAppointment = params => ajax(`${backendAPI}/appointment`, params, 'POST');
 // 修改预约
-export const editIotAppointment = params => ajax(`${backendAPI}/api/iot/appointment`, params, 'PUT');
+export const editIotAppointment = params => ajax(`${backendAPI}/appointment`, params, 'PUT');
 // 删除预约
-export const deleteIotAppointment = params => ajax(`${backendAPI}/api/iot/appointment`, params, 'DELETE');
+export const deleteIotAppointment = params => ajax(`${backendAPI}/appointment`, params, 'DELETE');

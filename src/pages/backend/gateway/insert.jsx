@@ -68,13 +68,18 @@ class AddGateWay extends Component {
     const {gatewayType} = this.state;
     const user = memoryUtils.user;
     // 如果内存没有存储user ==> 当前没有登陆
-    if (!user || !user.user) {
+    if (!user || !user.account) {
       // 自动跳转到登陆(在render()中)
       return <Redirect to='/login'/>
     }
     return (
       <Form {...this.formItemLayout} ref={this.formRef}>
         <Card title="接入凭证" bordered={false}>
+          <Form.Item label={<span>设备名称&nbsp;<Tooltip title="设备名称是您的设备在平台中的唯一标识，用于连接时授权认证"><QuestionCircleOutlined /></Tooltip></span>}
+                     name="authenUserName" initialValue={gateWay.authenUserName || `iot-${(user.account)}-${new Date().getTime()}`}  getValueFromEvent={ (e) => clearTrimValueEvent(e)}
+                     rules={[{required: true, message: '请输入设备名称'},{min: 6, message: '长度在 6 到 30 个字符'},{max: 30, message: '长度在 6 到 30 个字符'}]} {...this.formItemLayout}>
+            <Input disabled={true} placeholder='请输入设备名称'/>
+          </Form.Item>
           <Form.Item label={<span>认证密钥&nbsp;<Tooltip title="认证密钥将作为您的网关连接服务器的凭证，每个网关都有独立的认证密钥"><QuestionCircleOutlined /></Tooltip></span>}
             name="authenPassword" initialValue={gateWay.authenPassword || ""} getValueFromEvent={ (e) => clearTrimValueEvent(e)}
                      rules={[{required: true, message: '请输入认证密钥'},{min: 6, message: '长度在 6 到 15 个字符'},{max: 15, message: '长度在 6 到 15 个字符'}]} {...this.formItemLayout}>
@@ -82,11 +87,6 @@ class AddGateWay extends Component {
           </Form.Item>
         </Card>
         <Card title="网关信息" bordered={false}>
-          <Form.Item label={<span>网关编码&nbsp;<Tooltip title="网关编码是您的设备在平台中的唯一表示"><QuestionCircleOutlined /></Tooltip></span>}
-             name="gatewayCode" initialValue={gateWay.gatewayCode || `IOT${(user.user.user).toUpperCase()}${new Date().getTime()}`}  getValueFromEvent={ (e) => clearTrimValueEvent(e)}
-                     rules={[{required: true, message: '请输入网关编码'},{min: 6, message: '长度在 6 到 30 个字符'},{max: 30, message: '长度在 6 到 30 个字符'}]} {...this.formItemLayout}>
-            <Input disabled={true} placeholder='请输入网关编码'/>
-          </Form.Item>
           <Form.Item label="网关名："  name="gatewayName" initialValue={gateWay.gatewayName || ""}  getValueFromEvent={ (e) => clearTrimValueEvent(e)}
              rules={[{required: true, message: '请输入网关名'},{min: 6, message: '长度在 6 到 20 个字符'},{max: 20, message: '长度在 6 到 20 个字符'}]} {...this.formItemLayout}>
             <Input placeholder='例如：阳台-郁金香监测'/>

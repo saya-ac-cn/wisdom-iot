@@ -65,9 +65,9 @@ class Backend1 extends Component {
   initHeaderMenu = () => (
     <div className="backend-layout-header-info-hover">
       <div className='user-img-div'>
-        <Avatar size={64} src={this.userCatche.user.logo}/>
+        <Avatar size={64} src={`${process.env.PUBLIC_URL}/picture/user/2020062697574.png`}/>
         <div className='operator-img'>
-          <span>{this.userCatche.user.user}</span>
+          <span>{this.userCatche.account}</span>
           <Button type="link" href='/backstage/set/info'>更换头像</Button>
         </div>
       </div>
@@ -198,12 +198,15 @@ class Backend1 extends Component {
    */
   componentWillMount() {
     this.userCatche = memoryUtils.user || {};
-    if (!this.userCatche || !this.userCatche.user) {
+    console.log('---------',this.userCatche);
+    if (!this.userCatche || !this.userCatche.account) {
       // 自动跳转到登陆(在render()中)
       return <Redirect to='/login'/>
     }
+    console.log('---------',this.menuNodes);
     // 初始化左侧导航
     this.menuNodes = this.getMenuNodes(menuConfig);
+
     // 顶部用户头像下拉
     this.headerUserInfo = this.initHeaderMenu()
   }
@@ -212,7 +215,8 @@ class Backend1 extends Component {
   render() {
     const user = memoryUtils.user;
     // 如果内存没有存储user ==> 当前没有登陆
-    if (!user || !user.user) {
+    if (!user || !user.account) {
+      console.log("未登录",user)
       // 自动跳转到登陆(在render()中)
       return <Redirect to='/login'/>
     }
@@ -220,9 +224,10 @@ class Backend1 extends Component {
     const {collapsed,openKeys} = this.state;
     // 得到当前需要显示的title
     const {title, local} = this.getTitle();
+    console.log(title, local)
     return (
       <div className="backend1-container">
-        <div className='background1-div' style={{backgroundImage:`url('${process.env.PUBLIC_URL+'/picture/login/login_background1.png' || user.user.background}')`}}>
+        <div className='background1-div' style={{backgroundImage:`url('${process.env.PUBLIC_URL+'/picture/login/login_background1.png' || user.background}')`}}>
         </div>
         <header className="background1-header">
           <div className='header-logo'>

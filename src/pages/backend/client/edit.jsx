@@ -19,7 +19,7 @@ class EditClient extends Component {
   formRef = React.createRef();
 
   state = {
-    gatewaySelectData: [],// 系统返回的设备类别
+    gatewaySelectData: [],// 系统返回的网关设备类别
   }
 
   /**
@@ -68,18 +68,21 @@ class EditClient extends Component {
     const {client} = this.props;
     return (
       <Form {...this.formItemLayout} ref={this.formRef}>
-        <Card title="设备信息" bordered={false}>
+        <Card title="网关信息" bordered={false}>
           <Form.Item label={<span>所属&nbsp;<Tooltip title="设备将要附属在哪个网关下边，一个设备只能从属于一个网关"><QuestionCircleOutlined /></Tooltip></span>}
                      name="gatewayId" initialValue={client.gatewayId}  rules={[{required: true, message: '请选择网关'}]} {...this.formItemLayout}>
             <Select placeholder="请选择网关类型" allowClear>
               {gatewaySelectData}
             </Select>
           </Form.Item>
+        </Card>
+        <Card title="设备信息" bordered={false}>
           <Form.Item label="设备名："  name="name" initialValue={client.name || ""}  getValueFromEvent={ (e) => clearTrimValueEvent(e)}
                      rules={[{required: true, message: '请输入设备名'},{min: 6, message: '长度在 6 到 20 个字符'},{max: 20, message: '长度在 6 到 20 个字符'}]} {...this.formItemLayout}>
             <Input placeholder='例如：郁金香温湿度采集'/>
           </Form.Item>
-          <Form.Item label={<span>启用状态&nbsp;<Tooltip title="设备是否允许连接平台。选择关闭后，平台对该设备的数据将冷处理。对于来自该设备的数据将不再处理，也不会向该设备发送任何指令"><QuestionCircleOutlined /></Tooltip></span>}  name="enable" initialValue={client.enable || 1} rules={[{required: true, message: '请输入设备名'}]} {...this.formItemLayout}>
+          <Form.Item label={<span>启用状态&nbsp;<Tooltip title="设备是否允许连接平台。选择关闭后，平台对该设备的数据将冷处理。对于来自该设备的数据将不再处理，也不会向该设备发送任何指令"><QuestionCircleOutlined /></Tooltip></span>}
+                     name="enable" initialValue={client.enable || 1} rules={[{required: true, message: '请输入设备名'}]} {...this.formItemLayout}>
             <Radio.Group>
               <Radio value={1}>启用</Radio>
               <Radio value={2}>关闭</Radio>

@@ -57,9 +57,6 @@ class Client extends Component {
     lineDateGateway: {},// 网关详情，点击行详情按钮后保存
   };
 
-  constructor(props){
-    super(props)
-  }
 
   /*
   * 初始化Table所有列的数组
@@ -83,7 +80,7 @@ class Client extends Component {
       {
         title: '网关编码',
         render: (text,record) => {
-          return record.gateway.code || null;
+          return record.gateway.uuid || null;
         }
       },
       {
@@ -330,6 +327,7 @@ class Client extends Component {
           name: values.name,
           enable: values.enable,
         }
+        _this.setState({listLoading: true});
         const {msg, code} = await addIotClient(para)
         _this.setState({listLoading: false});
         if (code === 0) {
@@ -539,7 +537,7 @@ class Client extends Component {
                   <td className="label">网关ID</td>
                   <td className="value">{lineDateGateway.id || "-"}</td>
                   <td className="label">网关编码</td>
-                  <td colSpan="3" className="value">{lineDateGateway.code || "-"}</td>
+                  <td colSpan="3" className="value">{lineDateGateway.uuid || "-"}</td>
                   <td className="label">认证编码</td>
                   <td colSpan="3" className="value">{!lineDateGateway.authenInfo?"-":lineDateGateway.authenInfo.username}</td>
                 </tr>
