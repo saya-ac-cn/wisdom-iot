@@ -93,7 +93,7 @@ class EditAppointment extends Component {
     return (
       <Form {...this.formItemLayout} ref={this.formRef}>
         <Card title="设备信息" bordered={false}>
-          <Form.Item label={<span>设备&nbsp;<Tooltip title="预约指令将要下发在哪个设备下边。"><QuestionCircleOutlined /></Tooltip></span>}
+          <Form.Item label={<span>设备&nbsp;<Tooltip title="预约的指令将要作用在哪个设备上"><QuestionCircleOutlined /></Tooltip></span>}
                      name="clientId" initialValue={appointment.clientId || ""} rules={[{required: true, message: '请选择网关'}]} {...this.formItemLayout}>
             <Select placeholder="请选择设备" allowClear>
               {clientSelectData}
