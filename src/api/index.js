@@ -52,3 +52,17 @@ export const addIotAppointment = params => ajax(`${backendAPI}/appointment`, par
 export const editIotAppointment = params => ajax(`${backendAPI}/appointment`, params, 'PUT');
 // 删除预约
 export const deleteIotAppointment = params => ajax(`${backendAPI}/appointment`, params, 'DELETE');
+
+
+// 获取所有的基本物理量
+export const getIotSymbolUnits = params => ajax(`${backendAPI}/symbol/units`, params, 'GET');
+// 获取告警结果
+export const getIotWarringResultPage = params => ajax(`${backendAPI}/warning/result`, params, 'GET');
+// 获取告警规则
+export const getIotWarringRulePage = params => ajax(`${backendAPI}/warning/rules`, params, 'GET');
+// 添加预约
+export const addIotAddWarringRule = params => ajax(`${backendAPI}/warning/rules`, params, 'POST');
+// 修改预约
+export const addIotEditWarringRule = params => ajax(`${backendAPI}/warning/rules`, params, 'PUT');
+// 删除预约
+export const addIotDeleteWarringRule = params => ajax(`${backendAPI}/warning/rules`, params, 'DELETE');

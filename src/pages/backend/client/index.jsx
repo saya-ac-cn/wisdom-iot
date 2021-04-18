@@ -115,7 +115,7 @@ class Client extends Component {
   };
 
   /**
-   * 获取网关数据
+   * 获取设备数据
    * @returns {Promise<void>}
    */
   getDatas = async () => {

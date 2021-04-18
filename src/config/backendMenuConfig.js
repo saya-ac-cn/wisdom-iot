@@ -59,7 +59,7 @@ const backstageMenuList = [
             },
             {
                 title: '告警管理',
-                key: '/backstage/message/news',
+                key: '/backstage/waring/rule',
                 hidden: false,
                 requireAuth: true
             },
