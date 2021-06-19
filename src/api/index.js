@@ -60,9 +60,9 @@ export const getIotSymbolUnits = params => ajax(`${backendAPI}/symbol/units`, pa
 export const getIotWarringResultPage = params => ajax(`${backendAPI}/warning/result`, params, 'GET');
 // 获取告警规则
 export const getIotWarringRulePage = params => ajax(`${backendAPI}/warning/rules`, params, 'GET');
-// 添加预约
+// 添加告警规则
 export const addIotAddWarringRule = params => ajax(`${backendAPI}/warning/rules`, params, 'POST');
-// 修改预约
+// 修改告警规则
 export const addIotEditWarringRule = params => ajax(`${backendAPI}/warning/rules`, params, 'PUT');
-// 删除预约
+// 删除告警规则
 export const addIotDeleteWarringRule = params => ajax(`${backendAPI}/warning/rules`, params, 'DELETE');

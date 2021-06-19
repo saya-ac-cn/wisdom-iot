@@ -50,24 +50,6 @@ class WaringRule extends Component {
                 dataIndex: 'name', // 显示数据对应的属性名
             },
             {
-                title: '网关名',
-                render: (text,record) => {
-                    return record.iotClient.gateway.name || null;
-                }
-            },
-            {
-                title: '设备名',
-                render: (text,record) => {
-                    return record.iotClient.name || null;
-                }
-            },
-            {
-                title: '地址',
-                render: (text,record) => {
-                    return record.iotClient.gateway.address || null;
-                }
-            },
-            {
                 title: '物理量',
                 render: (text,record) => {
                     return _this.transformSymbolUnits(record.units)
