@@ -371,7 +371,7 @@ class Appointment extends Component {
         }
       }
     })
-  }
+  };
 
   /*
    *为第一次render()准备数据

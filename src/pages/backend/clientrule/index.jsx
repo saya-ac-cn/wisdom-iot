@@ -3,7 +3,7 @@ import DocumentTitle from "react-document-title";
 import {Button, Col, Input, Select, Table, Form, Modal} from "antd";
 import {DeleteOutlined, EditOutlined, PlusOutlined, ReloadOutlined, SearchOutlined} from "@ant-design/icons";
 import {getSymbolEnumString, getWaringRuleStatusString} from "../../../utils/enum";
-import {deleteIotWarringRule, getIotSymbolUnits, getIotWarringRulePage} from "../../../api";
+import {deleteClientIotWarringRule, getIotSymbolUnits, getClientIotWarringRulePage} from "../../../api";
 import {openNotificationWithIcon} from "../../../utils/window";
 import './index.less'
 import EditRule from './edit'
@@ -16,7 +16,7 @@ import EditRule from './edit'
 const {Option} = Select;
 
 // 定义组件（ES6）
-class WaringRule extends Component {
+class ClientRule extends Component {
 
     editRef = React.createRef();
 
@@ -32,7 +32,8 @@ class WaringRule extends Component {
         // 是否显示加载
         listLoading: false,
         filters: {
-            name: '',// 告警规则名
+            clientId: '',// 设备id
+            ruleId:'',//告警规则id
             selectStatusType: ''//用户选择的状态类别
         },
         symbolUnitsOption: [],// 选择框（基本物理量）
@@ -46,38 +47,43 @@ class WaringRule extends Component {
         const _this = this;
         _this.columns = [
             {
+                title: '设备名',
+                render: (text,record) => {
+                    return record.client.name || null;
+                }
+            },
+            {
                 title: '告警名',
-                dataIndex: 'name', // 显示数据对应的属性名
+                render: (text,record) => {
+                    return record.rule.name
+                }
             },
             {
                 title: '物理量',
-                render: (text, record) => {
-                    return _this.transformSymbolUnits(record.units)
+                render: (text,record) => {
+                    return _this.transformSymbolUnits(record.rule.units)
                 }
             },
             {
                 title: '规则',
-                render: (text, record) => {
-                    if (!record.symbol && 'RANGE' === record.symbol) {
-                        return <span>大于等于<b>{record.value1}</b>,小于等于<b>{record.value2}</b></span>
+                render: (text,record) => {
+                    if (!record.symbol && 'RANGE' === record.rule.symbol){
+                        return <span>大于等于<b>{record.rule.value1}</b>,小于等于<b>{record.rule.value2}</b></span>
                     } else {
-                        return <span>{getSymbolEnumString(record.symbol)}<b>{record.value1}</b></span>
+                        return <span>{getSymbolEnumString(record.rule.symbol)}<b>{record.rule.value1}</b></span>
                     }
                 }
             },
             {
                 title: '启用状态',
-                render: (text, record) => {
-                    return getWaringRuleStatusString(record.enable);
+                render: (text,record) => {
+                    return getWaringRuleStatusString(record.rule.enable);
                 }
             },
             {
                 title: '操作',
                 render: (text, record) => (
                     <div>
-                        <Button type="primary" title="编辑" onClick={() => this.openEditModal(record)} shape="circle"
-                                icon={<EditOutlined/>}/>
-                        &nbsp;
                         <Button type="primary" title="删除" onClick={() => this.handleDellRule(record)}
                                 shape="circle" icon={<DeleteOutlined/>}/>
                     </div>
@@ -111,15 +117,8 @@ class WaringRule extends Component {
         const {msg, code, data} = await getIotSymbolUnits();
         if (code === 0) {
             const symbolUnits = data;
-            // 利用更新状态的回调函数，渲染下拉选框
-            let symbolUnitsOption = [];
-            symbolUnitsOption.push((<Option key={-1} value="">请选择</Option>));
-            for (let key  in symbolUnits) {
-                let item = symbolUnits[key];
-                symbolUnitsOption.push((<Option key={item.symbol} value={item.symbol}>{item.name}</Option>));
-            }
             _this.setState({
-                symbolUnitsOption, symbolUnits
+                symbolUnits
             });
         } else {
             openNotificationWithIcon("error", "错误提示", msg);
@@ -144,13 +143,14 @@ class WaringRule extends Component {
         let para = {
             nowPage: _this.state.nowPage,
             pageSize: _this.state.pageSize,
-            name: _this.state.filters.name,
-            enable: _this.state.filters.selectStatusType,
+            clientId: _this.state.filters.clientId,
+            ruleId: _this.state.filters.ruleId,
+            enable: _this.state.filters.selectStatusType
         };
         // 在发请求前, 显示loading
         _this.setState({listLoading: true});
         // 发异步ajax请求, 获取数据
-        const {msg, code, data} = await getIotWarringRulePage(para);
+        const {msg, code, data} = await getClientIotWarringRulePage(para);
         // 在请求完成后, 隐藏loading
         _this.setState({listLoading: false});
         if (code === 0) {
@@ -169,7 +169,10 @@ class WaringRule extends Component {
         // 重置查询条件
         let _this = this;
         let filters = _this.state.filters;
-        filters.name = '';
+        filters.beginTime = null;
+        filters.endTime = null;
+        filters.clientId = '';
+        filters.ruleId = '';
         filters.selectStatusType = '';
         _this.setState({
             nowPage: 1,
@@ -198,13 +201,12 @@ class WaringRule extends Component {
 
     /**
      * 双向绑定用户查询预约名
-     * @param event
      */
-    nameInputChange = (event) => {
+    inputChange = (filed,event) => {
         let _this = this;
         const value = event.target.value;
         let filters = _this.state.filters;
-        filters.name = value;
+        filters[`${filed}`] = value;
         _this.setState({
             nowPage: 1,
             filters
@@ -235,16 +237,16 @@ class WaringRule extends Component {
     handleDellRule = (value) => {
         let _this = this;
         Modal.confirm({
-            title: '删除确认',
-            content: `确认删除名字为:"${value.name}"的告警规则吗?一旦删除，该告警规则所关联的设备告警规则也将解除关联`,
+            title: '确认解除告警规则绑定？',
+            content: `确认解除告警规则吗?一旦解除，该设备上报的数据将不再产生告警`,
             onOk: async () => {
                 // 在发请求前, 显示loading
                 _this.setState({listLoading: true});
-                const {msg, code} = await deleteIotWarringRule(value.id);
+                const {msg, code} = await deleteClientIotWarringRule([{id:value.id, clientId:value.clientId, ruleId:value.ruleId}]);
                 // 在请求完成后, 隐藏loading
                 _this.setState({listLoading: false});
                 if (code === 0) {
-                    openNotificationWithIcon("success", "操作结果", "删除成功");
+                    openNotificationWithIcon("success", "操作结果", "解除绑定成功");
                     _this.getDatas();
                 } else {
                     openNotificationWithIcon("error", "错误提示", msg);
@@ -275,14 +277,18 @@ class WaringRule extends Component {
         // 读取状态数据
         const {datas, dataTotal, nowPage, pageSize, listLoading, filters, statusType} = this.state;
         return (
-            <DocumentTitle title='物联网智慧家庭·告警管理'>
-                <section className="waringrule-v1">
+            <DocumentTitle title='物联网智慧家庭·绑定规则'>
+                <section className="clientrule-v1">
                     <EditRule onRef={this.bindEditRuleRef.bind(this)} refreshList={this.refreshListFromEditRule}/>
                     <Col span={24} className="toolbar">
                         <Form layout="inline">
-                            <Form.Item label="告警名">
-                                <Input type='text' value={filters.name} onChange={this.nameInputChange}
-                                       placeholder='按告警名检索'/>
+                            <Form.Item label="终端ID">
+                                <Input type='number' value={filters.name} onChange={e => this.inputChange('clientId',e)}
+                                       placeholder='按设备id检索'/>
+                            </Form.Item>
+                            <Form.Item label="规则ID">
+                                <Input type='number' value={filters.name} onChange={e => this.inputChange('ruleId',e)}
+                                       placeholder='按告告警规则id检索'/>
                             </Form.Item>
                             <Form.Item label="启用状态">
                                 <Select value={filters.selectStatusType} className="queur-type" showSearch
@@ -325,4 +331,4 @@ class WaringRule extends Component {
 }
 
 // 对外暴露
-export default WaringRule;
+export default ClientRule;

@@ -58,14 +58,20 @@ const backstageMenuList = [
                 requireAuth: true
             },
             {
-                title: '告警管理',
+                title: '告警定义',
                 key: '/backstage/waring/rule',
                 hidden: false,
                 requireAuth: true
             },
             {
+                title: '绑定规则',
+                key: '/backstage/client/rule',
+                hidden: false,
+                requireAuth: true
+            },
+            {
                 title: '告警记录',
-                key: '/backstage/message/news1',
+                key: '/backstage/waring/result',
                 hidden: false,
                 requireAuth: true
             }

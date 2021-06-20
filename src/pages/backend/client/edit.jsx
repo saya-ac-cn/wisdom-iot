@@ -82,7 +82,7 @@ class EditClient extends Component {
             <Input placeholder='例如：郁金香温湿度采集'/>
           </Form.Item>
           <Form.Item label={<span>启用状态&nbsp;<Tooltip title="设备是否允许连接平台。选择关闭后，平台对该设备的数据将冷处理。对于来自该设备的数据将不再处理，也不会向该设备发送任何指令"><QuestionCircleOutlined /></Tooltip></span>}
-                     name="enable" initialValue={client.enable || 1} rules={[{required: true, message: '请输入设备名'}]} {...this.formItemLayout}>
+                     name="enable" initialValue={client.enable || 1} rules={[{required: true, message: '请选择状态'}]} {...this.formItemLayout}>
             <Radio.Group>
               <Radio value={1}>启用</Radio>
               <Radio value={2}>关闭</Radio>

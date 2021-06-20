@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
-import {Button, Col, Input, Select, Modal, Form, Card, Tooltip, InputNumber} from "antd";
+import {Input, Select, Modal, Form, Card, Tooltip, InputNumber, Radio} from "antd";
 import {QuestionCircleOutlined} from "@ant-design/icons";
 import {clearTrimValueEvent} from "../../../utils/string";
-import {addIotAddWarringRule, getIotSymbolUnits} from "../../../api";
+import {addIotWarringRule, getIotSymbolUnits,editIotWarringRule} from "../../../api";
 import {openNotificationWithIcon} from "../../../utils/window";
 
 /*
@@ -19,8 +19,6 @@ class EditWaringRule extends Component {
     formRef = React.createRef();
 
     state = {
-        // 返回的账单数据
-        rule: null,
         // 是否显示加载
         listLoading: false,
         visibleModal:false,
@@ -36,7 +34,13 @@ class EditWaringRule extends Component {
             rule: val,
             visibleModal: true
         },function () {
-            // 执行初始化加载页面的辅助数据
+            if(!val || !val.id || -1 === val.id){
+                // 避坑：不同的antd版本，可能有差异
+                _this.formRef.current.setFieldsValue({'units':null, 'name':null,'symbol':null,'value1':0,'value2':null,'enable':1});
+            }else{
+                //注意 initialValues 不能被 setState 动态更新，你需要用 setFieldsValue 来更新。
+                _this.formRef.current.setFieldsValue(val);
+            }
         });
     };
 
@@ -45,18 +49,10 @@ class EditWaringRule extends Component {
     };
 
     /**
-     * 初始化页面配置信息
-     */
-    componentDidMount() {
-        // 加载页面数据
-        const _this = this;
-        _this.props.onRef(_this);
-    };
-
-    /**
      * 获取设备列表
      * @returns {Promise<void>}
      */
+
     // getClientSelectData = async () => {
     //     let _this = this;
     //     // 发异步ajax请求, 获取数据
@@ -133,7 +129,7 @@ class EditWaringRule extends Component {
 
     handleSubmit = async () => {
         const _this = this;
-        let checkFiles = ['units', 'name','symbol','value1'];
+        let checkFiles = ['units', 'name','symbol','value1','enable'];
         if (_this.state.value2RequireFlag){
             checkFiles.push('value2')
         }
@@ -144,6 +140,7 @@ class EditWaringRule extends Component {
                 name:value.name,
                 symbol:value.symbol,
                 value1:value.value1,
+                enable:value.enable
             };
             if (_this.state.value2RequireFlag){
                 param.value2=value.value2
@@ -152,17 +149,19 @@ class EditWaringRule extends Component {
             }
             if(!rule || !rule.id || -1 === rule.id){
                 // 添加
-                console.log("e:",value,rule);
                 _this.handleInsert(param);
+            }else{
+                param.id=rule.id;
+                _this.handleUpdate(param)
             }
         })
     };
 
     handleInsert = async (param) => {
         let _this = this;
-        const {msg, code, data} = await addIotAddWarringRule(param);
+        const {msg, code, data} = await addIotWarringRule(param);
         if (code === 0) {
-            //_this.resetForm();
+            _this.formRef.current.resetFields();
             _this.props.refreshList();
             openNotificationWithIcon("success", "操作结果", "添加成功");
             _this.handleCancel();
@@ -171,18 +170,36 @@ class EditWaringRule extends Component {
         }
     };
 
-    componentWillMount () {
+    handleUpdate = async (param) => {
+        let _this = this;
+        const {msg, code, data} = await editIotWarringRule(param);
+        if (code === 0) {
+            _this.formRef.current.resetFields();
+            _this.props.refreshList();
+            openNotificationWithIcon("success", "操作结果", "修改成功");
+            _this.handleCancel();
+        } else {
+            openNotificationWithIcon("error", "错误提示", msg);
+        }
+    };
+
+    /**
+     * 初始化页面配置信息
+     */
+    componentDidMount() {
+        // 加载页面数据
+        const _this = this;
         // 初始化设备下拉列表数据
+        _this.props.onRef(_this);
         //this.getClientSelectData();
         // 物理量
-        this.getIotSymbolUnits();
-        this.getRuleOperation();
-        this.formItemLayout = {
+        _this.getIotSymbolUnits();
+        _this.getRuleOperation();
+        _this.formItemLayout = {
             labelCol: {span: 4},
             wrapperCol: {span: 14},
         };
-    }
-
+    };
 
     render() {
       const {rule,visibleModal,symbolUnitsOption,ruleOperations,value2RequireFlag} = this.state;
@@ -214,7 +231,7 @@ class EditWaringRule extends Component {
                   </Card>
                   <Card title="告警规则" bordered={false}>
                       <Form.Item label="告警名："  name="name" initialValue={!rule || !rule.name ? '' :rule.name}  getValueFromEvent={ (e) => clearTrimValueEvent(e)}
-                                 rules={[{required: true, message: '请输入预约名'},{min: 6, message: '长度在 6 到 20 个字符'},{max: 20, message: '长度在 6 到 20 个字符'}]} {...this.formItemLayout}>
+                                 rules={[{required: true, message: '请输入告警名'},{min: 6, message: '长度在 6 到 20 个字符'},{max: 20, message: '长度在 6 到 20 个字符'}]} {...this.formItemLayout}>
                           <Input placeholder='例如：郁金香温定时浇水'/>
                       </Form.Item>
                       <Form.Item label='比较运算符号' name="symbol" initialValue={!rule || !rule.symbol ? '' :rule.symbol} rules={[{required: true, message: '请选择符号'}]} {...this.formItemLayout}>
@@ -229,6 +246,15 @@ class EditWaringRule extends Component {
                       <Form.Item label={<span>第二阈值&nbsp;<Tooltip title="仅当运算符是范围区间时，第一阈值将作为左闭区间比较，第二阈值将作为右闭区间比较。非范围运算符时，第二阈值不参与比较"><QuestionCircleOutlined /></Tooltip></span>}  name="value2" initialValue={!rule || !rule.value2 ? 0 :rule.value2}
                                  rules={[{required: value2RequireFlag, message: '请输入第二阈值'}]} {...this.formItemLayout}>
                           <InputNumber min={0} max={999}/>
+                      </Form.Item>
+                  </Card>
+                  <Card title='数据状态' bordered={false}>
+                      <Form.Item label={<span>启用状态&nbsp;<Tooltip title="该规则是否启用。选择关闭后，平台对绑定了该规则的设备将冷处理。对于来自该设备的数据将不会产生任何告警"><QuestionCircleOutlined /></Tooltip></span>}
+                                 name="enable" initialValue={!rule || !rule.enable ? 1 :rule.enable} rules={[{required: true, message: '请选择状态'}]} {...this.formItemLayout}>
+                          <Radio.Group>
+                              <Radio value={1}>启用</Radio>
+                              <Radio value={2}>关闭</Radio>
+                          </Radio.Group>
                       </Form.Item>
                   </Card>
               </Form>

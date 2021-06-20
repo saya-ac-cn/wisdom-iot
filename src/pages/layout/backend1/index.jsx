@@ -14,6 +14,8 @@ import Client from '../../backend/client'
 import Appointment from '../../backend/appointment'
 import {requestLogout} from "../../../api";
 import WaringRule from "../../backend/waring";
+import ClientRule from "../../backend/clientrule";
+import WaringResult from "../../backend/waringresult";
 /*
  * 文件名：index.jsx
  * 作者：saya
@@ -307,6 +309,8 @@ class Backend1 extends Component {
                   <Route path='/backstage/device/client' component={Client}/>
                   <Route path='/backstage/device/appointment' component={Appointment}/>
                   <Route path='/backstage/waring/rule' component={WaringRule}/>
+                  <Route path='/backstage/client/rule' component={ClientRule}/>
+                  <Route path='/backstage/waring/result' component={WaringResult}/>
                   {/*默认、及匹配不到时的页面*/}
                   <Redirect to='/backstage/api/mana'/>
                 </Switch>

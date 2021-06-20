@@ -61,8 +61,19 @@ export const getIotWarringResultPage = params => ajax(`${backendAPI}/warning/res
 // 获取告警规则
 export const getIotWarringRulePage = params => ajax(`${backendAPI}/warning/rules`, params, 'GET');
 // 添加告警规则
-export const addIotAddWarringRule = params => ajax(`${backendAPI}/warning/rules`, params, 'POST');
+export const addIotWarringRule = params => ajax(`${backendAPI}/warning/rules`, params, 'POST');
 // 修改告警规则
-export const addIotEditWarringRule = params => ajax(`${backendAPI}/warning/rules`, params, 'PUT');
+export const editIotWarringRule = params => ajax(`${backendAPI}/warning/rules`, params, 'PUT');
 // 删除告警规则
-export const addIotDeleteWarringRule = params => ajax(`${backendAPI}/warning/rules`, params, 'DELETE');
+export const deleteIotWarringRule = params => ajax(`${backendAPI}/warning/rules/${params}`, {}, 'DELETE');
+
+// 获取所有的告警定义
+export const getIotSystemRule = params => ajax(`${backendAPI}/system/rule`, params, 'GET');
+// 获取设备绑定的告警规则
+export const getClientIotWarringRulePage = params => ajax(`${backendAPI}/client/rules`, params, 'GET');
+// 绑定的设备告警规则
+export const addClientIotWarringRule = (clientId,params) => ajax(`${backendAPI}/client/rules/${clientId}`, params, 'POST');
+// 修改设备绑定的告警规则
+export const editClientIotWarringRule = params => ajax(`${backendAPI}/client/rules`, params, 'PUT');
+// 删除告警规则绑定
+export const deleteClientIotWarringRule = params => ajax(`${backendAPI}/client/rules`, params, 'POST');
