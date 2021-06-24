@@ -79,24 +79,24 @@ const backstageMenuList = [
     },
     {
         title: '收发历史',// 菜单标题名称
-        key: '/backstage/financial',// 对应的path
+        key: '/backstage/history',// 对应的path
         icon: 'FundProjectionScreenOutlined',// 图标名称
         hidden: false, //是否隐藏
         requireAuth: true, // 是否需要登录后访问
         children: [ // 子菜单列表
             {
                 title: '下发历史',
-                key: '/backstage/financial/transaction',
+                key: '/backstage/history/send',
                 hidden: false,
                 requireAuth: true
             },
             {
-                title: '历史接收',
-                key: '/backstage/financial/financialForDay',
+                title: '历史采集',
+                key: '/backstage/history/receive',
                 hidden: false,
                 requireAuth: true
             }
         ]
     }
-]
+];
 export default backstageMenuList

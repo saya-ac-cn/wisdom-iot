@@ -38,6 +38,28 @@ class WaringResult extends Component {
         },
     };
 
+    // 回调函数,改变页宽大小
+    changePageSize = (pageSize, current) => {
+        let _this = this;
+        // react在生命周期和event handler里的setState会被合并（异步）处理,需要在回调里回去获取更新后的 state.
+        _this.setState({
+            pageSize: pageSize,
+            nowPage: 1,
+        }, function () {
+            _this.getDatas();
+        });
+    };
+
+    // 回调函数，页面发生跳转
+    changePage = (current) => {
+        let _this = this;
+        _this.setState({
+            nowPage: current,
+        }, function () {
+            _this.getDatas();
+        });
+    };
+
     /*
      * 初始化Table所有列的数组
      */

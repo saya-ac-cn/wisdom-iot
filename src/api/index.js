@@ -77,3 +77,6 @@ export const addClientIotWarringRule = (clientId,params) => ajax(`${backendAPI}/
 export const editClientIotWarringRule = params => ajax(`${backendAPI}/client/rules`, params, 'PUT');
 // 删除告警规则绑定
 export const deleteClientIotWarringRule = params => ajax(`${backendAPI}/client/rules`, params, 'POST');
+
+// 查看采集信息
+export const getClientIotCollectionPage = params => ajax(`${backendAPI}/collection`, params, 'GET');
