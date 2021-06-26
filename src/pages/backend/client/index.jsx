@@ -553,7 +553,7 @@ class Client extends Component {
                 </tr>
                 <tr>
                   <td className="label" colSpan="2">网关最后一次心跳时间</td>
-                  <td className="value" colSpan="2">{lineDateGateway.lastHeattbeat || "-"}</td>
+                  <td className="value" colSpan="2">{lineDateGateway.lastHeartbeat || "-"}</td>
                   <td className="label">网关创建时间</td>
                   <td className="value" colSpan="2">{lineDateGateway.createTime || "-"}</td>
                   <td className="label">网关修改时间</td>

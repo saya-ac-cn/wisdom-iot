@@ -536,7 +536,7 @@ class Gateway extends Component {
                   </tr>
                   <tr>
                     <td className="label" colSpan="2">最后一次心跳时间</td>
-                    <td className="value" colSpan="2">{gateWay.lastHeattbeat || "-"}</td>
+                    <td className="value" colSpan="2">{gateWay.lastHeartbeat || "-"}</td>
                     <td className="label">创建时间</td>
                     <td className="value" colSpan="2">{gateWay.createTime || "-"}</td>
                     <td className="label">修改时间</td>
