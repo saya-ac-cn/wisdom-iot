@@ -72,6 +72,10 @@ class Client extends Component {
         dataIndex: 'name', // 显示数据对应的属性名
       },
       {
+        title:'产品名',
+        dataIndex:'productName',
+      },
+      {
         title: '网关名',
         render: (text,record) => {
           return record.gateway.name || null;
@@ -320,15 +324,17 @@ class Client extends Component {
   handleAddClient = (e) => {
     e.preventDefault();
     let _this = this;
-    _this.formRef.current.formRef.current.validateFields(["gatewayId","name","enable"])
+    _this.formRef.current.formRef.current.validateFields(["gatewayId","serialNum","productId","name","enable"])
       .then(async (values) => {
         let para = {
           gatewayId: values.gatewayId,
+          productId: values.productId,
           name: values.name,
+          serialNum:values.serialNum,
           enable: values.enable,
-        }
+        };
         _this.setState({listLoading: true});
-        const {msg, code} = await addIotClient(para)
+        const {msg, code} = await addIotClient(para);
         _this.setState({listLoading: false});
         if (code === 0) {
           openNotificationWithIcon("success", "操作结果", "添加成功");
@@ -344,7 +350,7 @@ class Client extends Component {
       }).catch(errorInfo => {
       console.log(errorInfo)
     });
-  }
+  };
 
   /**
    * 提交表单，修改设备
@@ -481,7 +487,7 @@ class Client extends Component {
           </Col>
           <Modal
             title="添加设备"
-            width="50%"
+            width="60%"
             visible={modalStatus === 1}
             closable={true}
             maskClosable={false}
@@ -528,8 +534,8 @@ class Client extends Component {
                   <td className="value">{lineDate.id || "-"}</td>
                   <td className="label">启用状态</td>
                   <td className="value">{!lineDate.enable?"-":getClientEnableString(lineDate.enable)}</td>
-                  <td className="label">电平状态</td>
-                  <td className="value">{!lineDate.level?"-":getClientLevelString(lineDate.level)}</td>
+                  <td className="label">产品名</td>
+                  <td className="value">{lineDate.productName||"-"}</td>
                   <td className="label">网关名</td>
                   <td colSpan="3" className="value">{lineDateGateway.name || "-"}</td>
                 </tr>

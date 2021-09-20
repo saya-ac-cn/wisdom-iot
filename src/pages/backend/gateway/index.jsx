@@ -373,8 +373,7 @@ class Gateway extends Component {
       onOk: async () => {
         // 在发请求前, 显示loading
         _this.setState({listLoading: true});
-        let para = { id: value.id };
-        const {msg, code} = await deleteIotGateway(para);
+        const {msg, code} = await deleteIotGateway(value.id);
         // 在请求完成后, 隐藏loading
         _this.setState({listLoading: false});
         if (code === 0) {

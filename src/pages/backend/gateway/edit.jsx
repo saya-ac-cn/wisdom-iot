@@ -90,6 +90,7 @@ class EditGateWay extends Component {
     e.preventDefault();
     let _this = this;
     let {gateWay} = _this.props;
+    console.log(gateWay);
     _this.formRef.current.validateFields(["gatewayEnable","authenUserName","gatewayName","gatewayAddress","gatewayType"])
       .then( async (values) => {
         let para = {
