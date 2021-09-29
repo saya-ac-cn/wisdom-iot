@@ -24,6 +24,17 @@ class EditClient extends Component {
     availableSerialNum:[]// 系统返回的可用设备序号
   };
 
+  componentWillReceiveProps(nextProps) {
+    console.log(nextProps)
+    // const { data } = this.state
+    // const newdata = nextProps.data.toString()
+    // if (data.toString() !== newdata) {
+    //   this.setState({
+    //     data: nextProps.data,
+    //   })
+    // }
+  }
+
   /**
    * 设置参数传递是否为空，数据类型等要求属性：
    * @type {{setForm: (*|Validator<NonNullable<T>>|(() => any))}}

@@ -493,7 +493,7 @@ class Client extends Component {
             maskClosable={false}
             onOk={this.handleAddClient}
             onCancel={()=>this.handleModalCancel(false)}>
-            <EditClient ref={this.formRef} client={{}}/>
+            <EditClient ref={this.formRef} client={{}} key={-1}/>
           </Modal>
           <Modal
             title="修改设备"
@@ -503,7 +503,7 @@ class Client extends Component {
             maskClosable={false}
             onOk={this.handleEditClient}
             onCancel={()=>this.handleModalCancel(false)}>
-            <EditClient ref={this.formRef} client={this.lineDate || {}}/>
+            <EditClient ref={this.formRef} client={this.lineDate || {}} key={0}/>
           </Modal>
           <Modal
             title="设备详情"
