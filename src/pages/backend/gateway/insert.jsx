@@ -21,7 +21,7 @@ class AddGateWay extends Component {
 
   state = {
     gatewayType: []// 系统返回的设备类别
-  }
+  };
 
   /**
    * 获取网关类别

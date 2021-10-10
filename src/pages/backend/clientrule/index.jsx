@@ -1,7 +1,7 @@
 import React, {Component} from 'react';
 import DocumentTitle from "react-document-title";
 import {Button, Col, Input, Select, Table, Form, Modal} from "antd";
-import {DeleteOutlined, EditOutlined, PlusOutlined, ReloadOutlined, SearchOutlined} from "@ant-design/icons";
+import {DeleteOutlined, PlusOutlined, ReloadOutlined, SearchOutlined} from "@ant-design/icons";
 import {getSymbolEnumString, getWaringRuleStatusString} from "../../../utils/enum";
 import {deleteClientIotWarringRule, getIotSymbolUnits, getClientIotWarringRulePage} from "../../../api";
 import {openNotificationWithIcon} from "../../../utils/window";
