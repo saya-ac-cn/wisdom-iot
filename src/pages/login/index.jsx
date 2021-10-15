@@ -151,28 +151,30 @@ class Login extends Component {
     return (
       <DocumentTitle title='物联网智慧家庭·统一身份认证入口'>
         <div className="login-register-container"
-             style={{backgroundImage: `url('${process.env.PUBLIC_URL}/picture/login/login_background1.png')`}}>
-          <div className="login-register-box">
-            <div className="login-box">
-              <div className="title">登录</div>
-              <div className="input">
-                <label style={userState ? activeLabel : unactiveLabel}>用户名</label>
-                <Input type="text" value={userName} onChange={this.userInputChange} onBlur={this.userOnBlur}
-                       onFocus={this.userOnFocus}/>
-                <span className="spin" style={userState ? activeSpin : unactiveSpin}></span>
+             style={{backgroundImage: `url('${process.env.PUBLIC_URL}/picture/login/login_background3.jpeg')`}}>
+          <div className='second-background' style={{backgroundImage: `url('${process.env.PUBLIC_URL}/picture/login/login_background2.png')`}}>
+            <div className="login-register-box">
+              <div className="login-box">
+                <div className="title">登录</div>
+                <div className="input">
+                  <label style={userState ? activeLabel : unactiveLabel}>用户名</label>
+                  <Input type="text" value={userName} onChange={this.userInputChange} onBlur={this.userOnBlur}
+                         onFocus={this.userOnFocus}/>
+                  <span className="spin" style={userState ? activeSpin : unactiveSpin}></span>
+                </div>
+                <div className="input">
+                  <label style={pwdState ? activeLabel : unactiveLabel}>密码</label>
+                  <Input type="password" value={passWord} onChange={this.pwdInputChange} onBlur={this.pwdOnBlur}
+                         onFocus={this.pwdOnFocus}/>
+                  <span className="spin" style={pwdState ? activeSpin : unactiveSpin}></span>
+                </div>
+                <div className="button login">
+                  <Button type="text" onClick={this.loginHandle} loading={loading}>登录</Button>
+                </div>
+                <Button type="link" className="pass-forgot">
+                  忘记密码？
+                </Button>
               </div>
-              <div className="input">
-                <label style={pwdState ? activeLabel : unactiveLabel}>密码</label>
-                <Input type="password" value={passWord} onChange={this.pwdInputChange} onBlur={this.pwdOnBlur}
-                       onFocus={this.pwdOnFocus}/>
-                <span className="spin" style={pwdState ? activeSpin : unactiveSpin}></span>
-              </div>
-              <div className="button login">
-                <Button type="text" onClick={this.loginHandle} loading={loading}>登录</Button>
-              </div>
-              <Button type="link" className="pass-forgot">
-                忘记密码？
-              </Button>
             </div>
           </div>
         </div>
