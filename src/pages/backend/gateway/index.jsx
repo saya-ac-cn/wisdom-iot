@@ -1,14 +1,15 @@
 import React, { Component } from 'react';
 import DocumentTitle from 'react-document-title'
 import {SearchOutlined, ReloadOutlined, PlusOutlined, EyeOutlined, EditOutlined, DeleteOutlined} from '@ant-design/icons';
-import {Row, Col, Form, Button, Table, DatePicker, Input, Select, Modal} from 'antd';
-import {getIotGatewayType, getIotGatewayPage, addIotGateway, deleteIotGateway} from '../../../api'
+import {Col, Form, Button, Table, DatePicker, Input, Select, Modal} from 'antd';
+import {getIotGatewayType, getIotGatewayPage, deleteIotGateway} from '../../../api'
 import {openNotificationWithIcon} from '../../../utils/window'
 import {getGatewayEnableString} from '../../../utils/enum'
 import moment from 'moment';
 import "./index.less"
-import AddGateWay from "./insert"
-import EditGateWay from "./edit"
+import GateWayModal from "./edit";
+import ViewGateWayModal from "./view";
+
 /*
  * 文件名：index.jsx
  * 作者：saya
@@ -20,7 +21,9 @@ const {Option} = Select;
 // 定义组件（ES6）
 class Gateway extends Component {
 
-  formRef = React.createRef();
+  editRef = React.createRef();
+
+  viewRef = React.createRef();
 
   state = {
     // 返回的单元格数据
@@ -280,91 +283,10 @@ class Gateway extends Component {
     })
   };
 
-  /*
-    * 显示添加的弹窗
-    */
-  handleModalAdd = () => {
-    this.setState({
-      modalStatus: 1
-    })
-  };
-
-  /*
-  * 显示修改的弹窗
-  */
-  handleModalEdit = (value) => {
-    this.lineDate = {
-      "id": value.id,
-      "gatewayEnable":value.authenInfo.enable,
-      "authenUserName":value.authenInfo.username,
-      "gatewayName":value.name,
-      "gatewayAddress":value.address,
-      "gatewayType":value.deviceType
-    };
-    this.setState({
-      modalStatus: 2
-    })
-  };
-
-  /*
-  * 显示详情的弹窗
-  */
-  handleModalInfo = (value) => {
-    this.lineDate = value
-    this.setState({
-      modalStatus: 3
-    })
-  };
-
-  /*
-  * 响应点击取消: 隐藏弹窗
-  */
-  handleModalCancel = (type) => {
-    if (type){
-      // 清除输入数据
-      this.formRef.current.formRef.current.resetFields();
-    }
-    // 隐藏确认框
-    this.setState({
-      modalStatus: 0
-    })
-  };
-
   /**
-   * 提交表单，添加网关设备
+   * 删除指定网关
+   * @param value
    */
-  handleAddGateWay = (e) => {
-    e.preventDefault();
-    let _this = this;
-    _this.formRef.current.formRef.current.validateFields(["authenPassword","authenUserName","gatewayName","gatewayAddress","gatewayType"])
-      .then(async (values) => {
-        let para = {
-          name: values.gatewayName,
-          address: values.gatewayAddress,
-          deviceType: values.gatewayType,
-          authenInfo: {username:values.authenUserName,password:values.authenPassword}
-        }
-        const {msg, code} = await addIotGateway(para)
-        _this.setState({listLoading: false});
-        if (code === 0) {
-          openNotificationWithIcon("success", "操作结果", "添加成功");
-          // 重置表单
-          _this.formRef.current.formRef.current.resetFields();
-          // 关闭弹窗
-          _this.handleModalCancel(true)
-          // 重新加载数据
-          _this.getDatas();
-        } else {
-          openNotificationWithIcon("error", "错误提示", msg);
-        }
-      }).catch(errorInfo => {
-        console.log(errorInfo)
-      });
-  }
-
-  /*
-  * 删除指定网关
-  */
   handleDellGateway = (value) => {
     let _this = this;
     Modal.confirm({
@@ -386,23 +308,75 @@ class Gateway extends Component {
     })
   };
 
-  /*
-   *为第一次render()准备数据
+
+  /**
+   * 显示详情的弹窗
+   * @param value
+   */
+  handleModalInfo = (value) => {
+    this.viewRef.handleDisplay(value);
+  };
+
+  /**
+   * 显示添加的弹窗
+   */
+  handleModalAdd = () => {
+    this.editRef.handleDisplay({});
+  };
+
+  /**
+   * 显示修改的弹窗
+   * @param value
+   * @returns {Promise<void>}
+   */
+  handleModalEdit = async (value) => {
+    let _this = this;
+    const line = {
+        "id": value.id,
+        "gatewayEnable":value.authenInfo.enable,
+        "authenUserName":value.authenInfo.username,
+        "gatewayName":value.name,
+        "gatewayAddress":value.address,
+        "gatewayType":value.deviceType
+      };
+    _this.editRef.handleDisplay(line);
+  };
+
+  /**
+   * 添加或者修改组件ref绑定
+   * @param ref
+   */
+  bindGateWayFormRef = (ref) => {
+    this.editRef = ref
+  };
+
+  /**
+   * 详情组件ref绑定
+   * @param ref
+   */
+  bindViewGateWayFormRef = (ref) => {
+    this.viewRef = ref
+  };
+
+  /**
+   * 绑定刷新事件
+   */
+  refreshListFromGateWayModal= () =>{
+    this.getDatas();
+  };
+
+  /**
+   * 为第一次render()准备数据
    * 因为要异步加载数据，所以方法改为async执行
    */
-  componentWillMount() {
+  componentDidMount() {
     // 初始化网关类别数据
     this.getTypeData();
     // 初始化表格属性设置
     this.initColumns();
     // 初始化设备状态数
-    this.initStatusSelect()
-  };
-
-  /*
-  执行异步任务: 发异步ajax请求
-   */
-  componentDidMount() {
+    this.initStatusSelect();
+    this.refreshListFromGateWayModal = this.refreshListFromGateWayModal.bind(this);
     // 加载页面数据
     this.getDatas();
   };
@@ -411,9 +385,7 @@ class Gateway extends Component {
 
   render() {
     // 读取状态数据
-    const {datas, dataTotal, nowPage, pageSize, listLoading,filters, gatewayType,statusType, modalStatus} = this.state;
-    // 读取所选中的行数据
-    const gateWay = this.lineDate || {}; // 如果还没有指定一个空对象
+    const {datas, dataTotal, nowPage, pageSize, listLoading,filters, gatewayType,statusType} = this.state;
     let {beginTime,endTime} = filters;
     let rangeDate;
     if (beginTime !== null && endTime !== null){
@@ -472,84 +444,12 @@ class Gateway extends Component {
                      onChange: this.changePage,
                    }}/>
           </Col>
-          <Modal
-            title="添加网关"
-            width="50%"
-            visible={modalStatus === 1}
-            onOk={this.handleAddGateWay}
-            maskClosable={false}
-            onCancel={()=>this.handleModalCancel(true)}>
-            <AddGateWay ref={this.formRef} gateWay={{}}/>
-          </Modal>
-          <Modal
-            title="修改网关"
-            width="50%"
-            visible={modalStatus === 2}
-            closable={true}
-            footer={null}
-            maskClosable={false}
-            onCancel={()=>this.handleModalCancel(false)}>
-            <EditGateWay ref={this.formRef} gateWay={gateWay}/>
-          </Modal>
-          <Modal
-            title="网关详情"
-            className="gateWay-v1-modal-info"
-            width="50%"
-            visible={modalStatus === 3}
-            closable={true}
-            footer={null}
-            maskClosable={false}
-            onCancel={()=>this.handleModalCancel(false)}>
-              <table>
-                <caption>{gateWay.name || "-"}</caption>
-                <colgroup>
-                  <col width="10%"/>
-                  <col width="10%"/>
-                  <col width="10%"/>
-                  <col width="10%"/>
-                  <col width="10%"/>
-                  <col width="10%"/>
-                  <col width="10%"/>
-                  <col width="10%"/>
-                  <col width="10%"/>
-                  <col width="10%"/>
-                </colgroup>
-                <tbody>
-                  <tr>
-                    <td className="label">网关ID</td>
-                    <td className="value">{gateWay.id || "-"}</td>
-                    <td className="label">网关编码</td>
-                    <td colSpan="3" className="value">{gateWay.uuid || "-"}</td>
-                    <td className="label">认证名称</td>
-                    <td colSpan="3" className="value">{!gateWay.authenInfo?"-":gateWay.authenInfo.username}</td>
-                  </tr>
-                  <tr>
-                    <td className="label">网关类型</td>
-                    <td className="value">{gateWay.deviceTypeInfo || "-"}</td>
-                    <td className="label">接入状态</td>
-                    <td className="value">{!gateWay.authenInfo?"-":getGatewayEnableString(gateWay.authenInfo.enable)}</td>
-                    <td className="label">创建者</td>
-                    <td className="value">{gateWay.source || "-"}</td>
-                    <td className="label">网关地址</td>
-                    <td className="value" colSpan="3" >{gateWay.address || "-"}</td>
-                  </tr>
-                  <tr>
-                    <td className="label" colSpan="2">最后一次心跳时间</td>
-                    <td className="value" colSpan="2">{gateWay.lastHeartbeat || "-"}</td>
-                    <td className="label">创建时间</td>
-                    <td className="value" colSpan="2">{gateWay.createTime || "-"}</td>
-                    <td className="label">修改时间</td>
-                    <td className="value" colSpan="2">{gateWay.updateTime || "-"}</td>
-                  </tr>
-                </tbody>
-              </table>
-              <div className="print-time">若数据显示异常，请重新打开&nbsp;&nbsp;&nbsp;&nbsp;平台打印时间：{moment().format("YYYY-MM-DD HH:mm:ss") }</div>
-          </Modal>
+          <ViewGateWayModal onRef={this.bindViewGateWayFormRef.bind(this)}/>
+          <GateWayModal onRef={this.bindGateWayFormRef.bind(this)} refreshList={this.refreshListFromGateWayModal}/>
         </section>
       </DocumentTitle>
     );
   }
 }
-
 // 对外暴露
 export default Gateway;
