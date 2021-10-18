@@ -231,7 +231,7 @@ class Backend1 extends Component {
     console.log(title, local)
     return (
       <div className="backend1-container">
-        <div className='background1-div' style={{backgroundImage:`url('${process.env.PUBLIC_URL+'/picture/login/login_background1.png' || user.background}')`}}>
+        <div className='background1-div' style={{backgroundImage:`url('${process.env.PUBLIC_URL+'/picture/background/background_1.jpeg' || user.background}')`}}>
         </div>
         <header className="background1-header">
           <div className='header-logo'>

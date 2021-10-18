@@ -11,15 +11,15 @@ import {
   SearchOutlined
 } from "@ant-design/icons";
 import moment from "moment";
-import {getClientEnableString, getGatewayEnableString, getClientLevelString} from "../../../utils/enum";
+import {getClientEnableString} from "../../../utils/enum";
 import {
-  addIotClient,
   getIotClientPage,
-  getIotGatewayEntity,
-  editIotClient,
   deleteIotClient} from "../../../api";
 import {openNotificationWithIcon} from "../../../utils/window";
-import EditClient from "../client/edit";
+import EditClientModal from "../client/edit";
+import ViewClientModal from "./view";
+
+
 /*
  * 文件名：index.jsx
  * 作者：saya
@@ -31,7 +31,9 @@ const {Option} = Select;
 // 定义组件（ES6）
 class Client extends Component {
 
-  formRef = React.createRef();
+  editRef = React.createRef();
+
+  viewRef = React.createRef();
 
   state = {
     // 返回的单元格数据
@@ -53,14 +55,12 @@ class Client extends Component {
       selectStatusType: ''//用户选择的状态类别
     },
     statusType: [],// 设备状态类别
-    modalStatus: 0, // 标识添加/更新的确认框是否显示, 0: 都不显示, 1: 显示添加, 2: 显示更新, 3: 显示详情
-    lineDateGateway: {},// 网关详情，点击行详情按钮后保存
   };
 
 
-  /*
-  * 初始化Table所有列的数组
-  */
+  /**
+   * 初始化Table所有列的数组
+   */
   initColumns = () => {
     this.columns = [
       {
@@ -255,138 +255,15 @@ class Client extends Component {
   };
 
   /**
-   * 获取网关详情数据
-   * @returns {Promise<void>}
+   * 显示详情的弹窗
    */
-  getGateWayDatas = async (id) => {
-    // 发异步ajax请求, 获取数据
-    // 在发请求前, 显示loading
-    this.setState({listLoading: true, lineDateGateway: {}});
-    const {msg, code, data} = await getIotGatewayEntity(id);
-    // 在请求完成后, 隐藏loading
-    this.setState({listLoading: false});
-    if (code === 0) {
-      this.setState({
-        lineDateGateway: data
-      })
-    } else {
-      openNotificationWithIcon("error", "错误提示", msg);
-    }
-  };
-
-  /*
-  * 显示添加的弹窗
-  */
-  handleModalAdd = () => {
-    this.setState({
-      modalStatus: 1
-    })
-  };
-
-  /*
-  * 显示修改的弹窗
-  */
-  handleModalEdit = (value) => {
-    this.lineDate = value;
-    this.setState({
-      modalStatus: 2
-    })
-  };
-
-  /*
-  * 显示详情的弹窗
-  */
   handleModalInfo = (value) => {
-    this.lineDate = value;
-    this.getGateWayDatas(value.gatewayId);
-    this.setState({
-      modalStatus: 3
-    })
-  };
-
-  /*
-  * 响应点击取消: 隐藏弹窗
-  */
-  handleModalCancel = (type) => {
-    if (type){
-      // 清除输入数据
-      this.formRef.current.formRef.current.resetFields();
-    }
-    // 隐藏确认框
-    this.setState({
-      modalStatus: 0
-    })
+    this.viewRef.handleDisplay(value);
   };
 
   /**
-   * 提交表单，添加设备
+   * 删除指定设备
    */
-  handleAddClient = (e) => {
-    e.preventDefault();
-    let _this = this;
-    _this.formRef.current.formRef.current.validateFields(["gatewayId","serialNum","productId","name","enable"])
-      .then(async (values) => {
-        let para = {
-          gatewayId: values.gatewayId,
-          productId: values.productId,
-          name: values.name,
-          serialNum:values.serialNum,
-          enable: values.enable,
-        };
-        _this.setState({listLoading: true});
-        const {msg, code} = await addIotClient(para);
-        _this.setState({listLoading: false});
-        if (code === 0) {
-          openNotificationWithIcon("success", "操作结果", "添加成功");
-          // 重置表单
-          _this.formRef.current.formRef.current.resetFields();
-          // 关闭弹窗
-          _this.handleModalCancel(true)
-          // 重新加载数据
-          _this.getDatas();
-        } else {
-          openNotificationWithIcon("error", "错误提示", msg);
-        }
-      }).catch(errorInfo => {
-      console.log(errorInfo)
-    });
-  };
-
-  /**
-   * 提交表单，修改设备
-   */
-  handleEditClient = (e) => {
-    e.preventDefault();
-    let _this = this;
-    _this.formRef.current.formRef.current.validateFields(["gatewayId","name","enable"])
-      .then(async (values) => {
-        let para = {
-          id: this.lineDate.id,
-          gatewayId: values.gatewayId,
-          name: values.name,
-          enable: values.enable,
-        }
-        const {msg, code} = await editIotClient(para)
-        _this.setState({listLoading: false});
-        if (code === 0) {
-          openNotificationWithIcon("success", "操作结果", "修改成功");
-          // 重置表单
-          _this.formRef.current.formRef.current.resetFields();
-          // 关闭弹窗
-          _this.handleModalCancel(true)
-          // 重新加载数据
-          _this.getDatas();
-        } else {
-          openNotificationWithIcon("error", "错误提示", msg);
-        }
-      }).catch(errorInfo => {
-      console.log(errorInfo)
-    });
-  }
-
-  /*
-  * 删除指定设备
-  */
   handleDellClient= (value) => {
     let _this = this;
     Modal.confirm({
@@ -409,30 +286,63 @@ class Client extends Component {
     })
   };
 
-  /*
-   *为第一次render()准备数据
+  /**
+   * 显示添加的弹窗
+   */
+  handleModalAdd = () => {
+    this.editRef.handleDisplay({});
+  };
+
+  /**
+   * 显示修改的弹窗
+   * @param value
+   * @returns {Promise<void>}
+   */
+  handleModalEdit = async (value) => {
+    let _this = this;
+    _this.editRef.handleDisplay(value);
+  };
+
+  /**
+   * 添加或者修改组件ref绑定
+   * @param ref
+   */
+  bindClientFormRef = (ref) => {
+    this.editRef = ref
+  };
+
+  /**
+   * 详情组件ref绑定
+   * @param ref
+   */
+  bindViewClientFormRef = (ref) => {
+    this.viewRef = ref
+  };
+
+  /**
+   * 绑定刷新事件
+   */
+  refreshListFromClientModal= () =>{
+    this.getDatas();
+  };
+
+  /**
+   * 为第一次render()准备数据
    * 因为要异步加载数据，所以方法改为async执行
    */
-  componentWillMount() {
+  componentDidMount() {
     // 初始化表格属性设置
     this.initColumns();
     // 初始化设备状态数
-    this.initStatusSelect()
-  };
-
-  /*
-  执行异步任务: 发异步ajax请求
-   */
-  componentDidMount() {
+    this.initStatusSelect();
+    this.refreshListFromClientModal = this.refreshListFromClientModal.bind(this);
     // 加载页面数据
     this.getDatas();
   };
 
   render() {
     // 读取状态数据
-    const {datas, dataTotal, nowPage, pageSize, listLoading,filters,statusType, modalStatus, lineDateGateway} = this.state;
-    // 读取所选中的行数据
-    const lineDate = this.lineDate || {}; // 如果还没有指定一个空对象
+    const {datas, dataTotal, nowPage, pageSize, listLoading,filters,statusType} = this.state;
     let {beginTime,endTime} = filters;
     let rangeDate;
     if (beginTime !== null && endTime !== null){
@@ -485,98 +395,8 @@ class Client extends Component {
                      onChange: this.changePage,
                    }}/>
           </Col>
-          <Modal
-            title="添加设备"
-            width="60%"
-            visible={modalStatus === 1}
-            closable={true}
-            maskClosable={false}
-            onOk={this.handleAddClient}
-            onCancel={()=>this.handleModalCancel(false)}>
-            <EditClient ref={this.formRef} client={{}} key={-1}/>
-          </Modal>
-          <Modal
-            title="修改设备"
-            width="50%"
-            visible={modalStatus === 2}
-            closable={true}
-            maskClosable={false}
-            onOk={this.handleEditClient}
-            onCancel={()=>this.handleModalCancel(false)}>
-            <EditClient ref={this.formRef} client={this.lineDate || {}} key={0}/>
-          </Modal>
-          <Modal
-            title="设备详情"
-            className="client-v1-modal-info"
-            width="50%"
-            visible={modalStatus === 3}
-            closable={true}
-            footer={null}
-            maskClosable={false}
-            onCancel={()=>this.handleModalCancel(false)}>
-            <table>
-              <caption>{lineDate.name || "-"}</caption>
-              <colgroup>
-                <col width="10%"/>
-                <col width="10%"/>
-                <col width="10%"/>
-                <col width="10%"/>
-                <col width="10%"/>
-                <col width="10%"/>
-                <col width="10%"/>
-                <col width="10%"/>
-                <col width="10%"/>
-                <col width="10%"/>
-              </colgroup>
-              <tbody>
-                <tr>
-                  <td className="label">设备ID</td>
-                  <td className="value">{lineDate.id || "-"}</td>
-                  <td className="label">启用状态</td>
-                  <td className="value">{!lineDate.enable?"-":getClientEnableString(lineDate.enable)}</td>
-                  <td className="label">产品名</td>
-                  <td className="value">{lineDate.productName||"-"}</td>
-                  <td className="label">网关名</td>
-                  <td colSpan="3" className="value">{lineDateGateway.name || "-"}</td>
-                </tr>
-                <tr>
-                  <td className="label">网关ID</td>
-                  <td className="value">{lineDateGateway.id || "-"}</td>
-                  <td className="label">网关编码</td>
-                  <td colSpan="3" className="value">{lineDateGateway.uuid || "-"}</td>
-                  <td className="label">认证编码</td>
-                  <td colSpan="3" className="value">{!lineDateGateway.authenInfo?"-":lineDateGateway.authenInfo.username}</td>
-                </tr>
-                <tr>
-                  <td className="label">网关类型</td>
-                  <td className="value">{lineDateGateway.deviceTypeInfo || "-"}</td>
-                  <td className="label">接入状态</td>
-                  <td className="value">{!lineDateGateway.authenInfo?"-":getGatewayEnableString(lineDateGateway.authenInfo.enable)}</td>
-                  <td className="label">创建者</td>
-                  <td className="value">{lineDateGateway.source || "-"}</td>
-                  <td className="label">网关地址</td>
-                  <td className="value" colSpan="3" >{lineDateGateway.address || "-"}</td>
-                </tr>
-                <tr>
-                  <td className="label" colSpan="2">网关最后一次心跳时间</td>
-                  <td className="value" colSpan="2">{lineDateGateway.lastHeartbeat || "-"}</td>
-                  <td className="label">网关创建时间</td>
-                  <td className="value" colSpan="2">{lineDateGateway.createTime || "-"}</td>
-                  <td className="label">网关修改时间</td>
-                  <td className="value" colSpan="2">{lineDateGateway.updateTime || "-"}</td>
-                </tr>
-                <tr>
-                  <td className="label" colSpan="2">设备最后一次心跳时间</td>
-                  <td className="value" colSpan="2">{lineDate.lastLinkTime || "-"}</td>
-                  <td className="label">设备创建时间</td>
-                  <td className="value" colSpan="2">{lineDate.createTime || "-"}</td>
-                  <td className="label">设备修改时间</td>
-                  <td className="value" colSpan="2">{lineDate.updateTime || "-"}</td>
-                </tr>
-              </tbody>
-            </table>
-            <div className="print-time">若数据显示异常，请重新打开&nbsp;&nbsp;&nbsp;&nbsp;平台打印时间：{moment().format("YYYY-MM-DD HH:mm:ss") }</div>
-          </Modal>
+          <ViewClientModal onRef={this.bindViewClientFormRef.bind(this)}/>
+          <EditClientModal onRef={this.bindClientFormRef.bind(this)} refreshList={this.refreshListFromClientModal}/>
         </section>
       </DocumentTitle>
     );

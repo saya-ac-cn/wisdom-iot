@@ -91,7 +91,6 @@ class GateWayModal extends Component {
   handleAdd = async (value) =>{
     let _this = this;
     const {msg, code} = await addIotGateway(value);
-    _this.setState({listLoading: false});
     if (code === 0) {
       openNotificationWithIcon("success", "操作结果", "添加成功");
       // 重置表单
