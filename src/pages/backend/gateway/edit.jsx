@@ -217,7 +217,7 @@ class GateWayModal extends Component {
       return <Redirect to='/login'/>
     }
     return (
-        <Modal title={!gateWay || !gateWay.id ? '添加网关':'编辑网关'} visible={visibleModal} maskClosable={false} okText='保存' onOk={this.handleSubmit} onCancel={this.handleCancel}>
+        <Modal title={!gateWay || !gateWay.id ? '添加网关':'编辑网关'} visible={visibleModal} maskClosable={false} width="60%" okText='保存' onOk={this.handleSubmit} onCancel={this.handleCancel}>
           {(!gateWay || !gateWay.id)?
               <Form {...this.formItemLayout} ref={this.formRef}>
                 <Card title="接入凭证" bordered={false}>

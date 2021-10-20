@@ -6,7 +6,7 @@ import {addIotWarringRule, getIotSymbolUnits,editIotWarringRule} from "../../../
 import {openNotificationWithIcon} from "../../../utils/window";
 
 /*
- * 文件名：edit.jsx
+ * 文件名：edit_.jsx
  * 作者：liunengkai
  * 创建日期：4/18/21 - 6:53 PM
  * 描述：修改告警规则

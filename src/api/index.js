@@ -82,5 +82,26 @@ export const editClientIotWarringRule = params => ajax(`${backendAPI}/client/rul
 // 删除告警规则绑定
 export const deleteClientIotWarringRule = params => ajax(`${backendAPI}/client/rules`, params, 'POST');
 
+
+// 获取产品列表
+export const getProductList = params => ajax(`${backendAPI}/product`, params, 'GET');
+// 添加产品
+export const addProduct = params => ajax(`${backendAPI}/product`, params, 'POST');
+// 修改产品
+export const editProduct = params => ajax(`${backendAPI}/product`, params, 'PUT');
+// 删除产品
+export const deleteProduct = params => ajax(`${backendAPI}/product/${params}`, {}, 'DELETE');
+
+// 获取产品物模型列表
+export const getProductAbilityList = id => ajax(`${backendAPI}/product/ability/${id}`, {}, 'GET');
+// 添加产品物模型
+export const addProductAbility = params => ajax(`${backendAPI}/product/ability`, params, 'POST');
+// 修改产品物模型
+export const editProductAbility = params => ajax(`${backendAPI}/product/ability`, params, 'PUT');
+// 删除产品物模型
+export const deleteProductAbility = id => ajax(`${backendAPI}/product/ability/${id}`, {}, 'DELETE');
+// 获取标准物理量
+export const getStandardList = () => ajax(`${backendAPI}/standard`,{},'GET')
+
 // 查看采集信息
 export const getClientIotCollectionPage = params => ajax(`${backendAPI}/collection`, params, 'GET');

@@ -17,6 +17,7 @@ import WaringRule from "../../backend/waring";
 import ClientRule from "../../backend/clientrule";
 import WaringResult from "../../backend/waringresult";
 import Collections from "../../backend/collection";
+import Product from "../../backend/product";
 /*
  * 文件名：index.jsx
  * 作者：saya
@@ -313,6 +314,7 @@ class Backend1 extends Component {
                   <Route path='/backstage/client/rule' component={ClientRule}/>
                   <Route path='/backstage/waring/result' component={WaringResult}/>
                   <Route path='/backstage/history/receive' component={Collections}/>
+                  <Route path='/backstage/device/product' component={Product}/>
                   {/*默认、及匹配不到时的页面*/}
                   <Redirect to='/backstage/api/mana'/>
                 </Switch>

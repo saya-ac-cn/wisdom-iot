@@ -45,7 +45,7 @@ const backstageMenuList = [
         ]
     },
     {
-        title: '告警预约',// 菜单标题名称
+        title: '系统设置',// 菜单标题名称
         key: '/backstage/message',// 对应的path
         icon: 'HistoryOutlined',// 图标名称
         hidden: false, //是否隐藏
@@ -72,6 +72,12 @@ const backstageMenuList = [
             {
                 title: '告警记录',
                 key: '/backstage/waring/result',
+                hidden: false,
+                requireAuth: true
+            },
+            {
+                title: '产品管理',
+                key: '/backstage/device/product',
                 hidden: false,
                 requireAuth: true
             }
