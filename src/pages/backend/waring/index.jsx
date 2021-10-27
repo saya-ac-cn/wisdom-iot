@@ -114,9 +114,9 @@ class WaringRule extends Component {
     initStatusSelect = () => {
         let _this = this;
         let statusType = [
-            (<Option key={-1} value="">请选择</Option>),
-            (<Option key={1} value="1">启用</Option>),
-            (<Option key={2} value="2">禁用</Option>),
+            <Option key={-1} value="">请选择</Option>,
+            <Option key={1} value="1">启用</Option>,
+            <Option key={2} value="2">禁用</Option>,
         ];
         _this.setState({
             statusType

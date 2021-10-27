@@ -244,7 +244,7 @@ class Backend1 extends Component {
             <div className='project-div' style={{backgroundImage:`url('${process.env.PUBLIC_URL}/picture/svg/project.svg')`}}>
             </div>
             <div className='project-name'>
-              物联网智慧家庭
+              物联网运营中心
             </div>
           </div>
           <div className='header-info'>
