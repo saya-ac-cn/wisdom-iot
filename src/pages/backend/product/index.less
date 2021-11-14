@@ -1,15 +1,45 @@
 @import '../../../config/var.less';
 .product-v1{
   height: 100%;
-  .tree-data {
+  .product-data {
     height: 100%;
     .tree-area{
       height: 100%;
       border-right: 1px solid #f0f0f0;
       .ant-tree{
         height: 100%;
-        //background: none;
-        //color: rgba(255, 255, 255, 0.7);
+      }
+    }
+    .table-area{
+      .detail-table{
+        color: #000;
+        width: 100%;
+        border:1px solid #f0f0f0;
+        font-size: 0.95em;
+        caption{
+          caption-side:top;// 表格标题的位置
+          text-align: center;
+          padding-bottom: 1em;
+          font-weight: bold;
+          font-size: 1.1em;
+        }
+        tbody{
+          tr{
+            border:1px solid #f0f0f0;
+            .label{
+              font-weight: bold;
+              padding-left: 0.8em;
+            }
+            .value{
+              padding-left: 0.8em;
+            }
+          }
+          td{
+            padding-top: 0.8em;
+            padding-bottom: 0.8em;
+            border:1px solid #f0f0f0;
+          }
+        }
       }
     }
   }

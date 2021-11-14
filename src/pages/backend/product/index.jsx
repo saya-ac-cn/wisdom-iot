@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import {Button, Col, Row, Table, Modal, Menu,Tooltip} from 'antd';
+import {Button, Col, Row, Table, Modal, Menu,Tooltip,Tabs} from 'antd';
 import './index.less'
 import DocumentTitle from 'react-document-title'
 import {
@@ -8,17 +8,18 @@ import {
     EditOutlined,
     PlusOutlined,
     LineOutlined,
-    DeleteOutlined
+    DeleteOutlined,CodeOutlined,ControlOutlined
 } from '@ant-design/icons';
 import {
     getProductList,
     getProductAbilityList,
     deleteProduct,
-    deleteProductAbility,} from "../../../api";
+    deleteProductAbility, getIotWarringRulePage,
+} from "../../../api";
 import {openNotificationWithIcon} from "../../../utils/window";
 import EditAbilityModal from "./ability"
 import EditProductModal from "./product"
-
+import {getProductStatusString} from "../../../utils/enum";
 /*
  * 文件名：index.jsx
  * 作者：liunengkai
@@ -26,6 +27,7 @@ import EditProductModal from "./product"
  * 描述：产品管理
  */
 const { SubMenu } = Menu;
+const { TabPane } = Tabs;
 
 // 定义组件（ES6）
 class Product extends Component {
@@ -37,6 +39,7 @@ class Product extends Component {
     state = {
         // 返回的产品列表数据
         products: [],
+        productMap:{},
         abilities:[],
         // 是否显示加载
         listLoading: false,
@@ -47,9 +50,9 @@ class Product extends Component {
     /**
      * 初始化Table所有列的数组
      */
-    initColumns = () => {
+    initAbilityColumns = () => {
         const _this = this;
-        _this.columns = [
+        _this.abilityColumns = [
             {
                 title: '属性名',
                 dataIndex: 'name'
@@ -152,9 +155,11 @@ class Product extends Component {
         const {msg, code, data} = await getProductList();
         // 在请求完成后, 隐藏loading
         let products = [];
+        let productMap = {};
         if (code === 0) {
             for (let key  in data) {
                 let item = data[key];
+                productMap[item.id] = item;
                 products.push(<Menu.Item key={item.id}><div style={{width:"100%",display:"flex",alignItems:"center",justifyContent: "space-between"}}><span>{item.name}</span>
                     <Tooltip placement="right" trigger='click' color='#fff' title={<div><Button type="primary" shape="circle" onClick={()=>_this.deleteProduct(item.id)} icon={<LineOutlined />} size='small' danger/>&nbsp;<Button type="primary" shape="circle" onClick={()=>_this.handleModalProductEdit(item)} icon={<EditOutlined />} size='small'/>&nbsp;<Button type="primary" shape="circle" onClick={this.handleModalAbilityAdd} icon={<PlusOutlined />} size='small'/></div>}>
                         <EllipsisOutlined/>
@@ -162,7 +167,8 @@ class Product extends Component {
                 </div></Menu.Item>)
             }
             _this.setState({
-                products
+                products:products,
+                productMap:productMap
             })
         } else {
             openNotificationWithIcon("error", "错误提示", msg);
@@ -176,14 +182,43 @@ class Product extends Component {
     getProductAbility = async (id) => {
         const _this = this;
         // 在发请求前, 显示loading
-        _this.setState({listLoading: true});
+        //_this.setState({listLoading: true});
         // 发异步ajax请求, 获取数据
         const {msg, code, data} = await getProductAbilityList(id);
         // 在发请求前, 显示loading
-        _this.setState({listLoading: false});
+        //_this.setState({listLoading: false});
         if (code === 0) {
             // 在发请求前, 显示loading
             _this.setState({abilities: data});
+        } else {
+            openNotificationWithIcon("error", "错误提示", msg);
+        }
+    };
+
+    /**
+     * 获取产品告警规则数据
+     * @returns {Promise<void>}
+     */
+    getProductWarringRule = async (productId) => {
+        let _this = this;
+        let para = {
+            nowPage: 0,
+            pageSize: 10000,
+            productId:productId
+        };
+        // 在发请求前, 显示loading
+        //_this.setState({listLoading: true});
+        // 发异步ajax请求, 获取数据
+        const {msg, code, data} = await getIotWarringRulePage(para);
+        // 在请求完成后, 隐藏loading
+        //_this.setState({listLoading: false});
+        if (code === 0) {
+            // _this.setState({
+            //     // 总数据量
+            //     dataTotal: data.dateSum,
+            //     // 表格数据
+            //     datas: data.grid
+            // });
         } else {
             openNotificationWithIcon("error", "错误提示", msg);
         }
@@ -195,6 +230,7 @@ class Product extends Component {
      */
     productSelect = (e) =>{
         console.log(e);
+
         if (!e || e.key === -1){
             return
         }
@@ -202,6 +238,7 @@ class Product extends Component {
             alreadySelectProduct:e.key
         });
         this.getProductAbility(e.key);
+        this.getProductWarringRule(e.key);
     };
 
 
@@ -217,6 +254,7 @@ class Product extends Component {
             _this.getProductDatas();
             openNotificationWithIcon("success", "操作结果", "删除成功");
             _this.getProductAbility(productId);
+            _this.getProductWarringRule(productId);
         }else {
             openNotificationWithIcon("error", "错误提示", msg);
         }
@@ -232,7 +270,8 @@ class Product extends Component {
     /**
      * 显示产品添加的弹窗
      */
-    handleModalProductAdd = () => {
+    handleModalProductAdd = (e) => {
+        e.stopPropagation();
         this.productRef.handleDisplay({});
     };
 
@@ -321,6 +360,7 @@ class Product extends Component {
         const _this = this;
         const productId = _this.state.alreadySelectProduct;
         _this.getProductAbility(productId);
+        _this.getProductWarringRule(productId);
     };
 
     /**
@@ -337,18 +377,22 @@ class Product extends Component {
      */
     componentDidMount() {
         this.getProductDatas();
-        this.initColumns();
+        this.initAbilityColumns();
         this.refreshListFromProductModal = this.refreshListFromProductModal.bind(this);
         this.refreshListFromAbilityModal = this.refreshListFromAbilityModal.bind(this);
     }
 
 
     render() {
-        const {products,listLoading,abilities} = this.state;
+        const {products,productMap,listLoading,abilities,alreadySelectProduct} = this.state;
+        let currentProduct = {id:null,name:null,status:null};
+        if(productMap && alreadySelectProduct){
+            currentProduct = productMap[alreadySelectProduct];
+        }
         return (
             <DocumentTitle title='物联网智慧家庭·产品管理'>
                 <section className="product-v1">
-                    <Row className="tree-data">
+                    <Row className="product-data">
                         <Col span={5} className="tree-area">
                             <Menu mode="inline" defaultOpenKeys={['-1']} onSelect={this.productSelect}>
                                 <SubMenu key="-1" icon={<MenuOutlined />} title={<div style={{width:"100%",display:"flex",alignItems:"center",justifyContent: "space-between"}}><span>全部</span><PlusOutlined onClick={this.handleModalProductAdd}/></div>}>
@@ -357,7 +401,34 @@ class Product extends Component {
                             </Menu>
                         </Col>
                         <Col span={19} className="table-area">
-                            <Table size="middle" rowKey="id" pagination={false} loading={listLoading} columns={this.columns} dataSource={abilities}/>
+                            <table className="detail-table">
+                                <colgroup>
+                                    <col width="20%"/>
+                                    <col width="30%"/>
+                                    <col width="20%"/>
+                                    <col width="30%"/>
+                                </colgroup>
+                                <tbody>
+                                    <tr>
+                                        <td className="label">产品名</td>
+                                        <td className="value" colSpan="3">{currentProduct?currentProduct.name:''}</td>
+                                    </tr>
+                                    <tr>
+                                        <td className="label">产品ID</td>
+                                        <td className="value">{currentProduct?currentProduct.id:''}</td>
+                                        <td className="label">是否启用</td>
+                                        <td className="value">{currentProduct?getProductStatusString(currentProduct.status):''}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <Tabs defaultActiveKey="1">
+                                <TabPane tab={<span><CodeOutlined/>数据模型</span>} key="1">
+                                    <Table size="middle" rowKey="id" pagination={false} loading={listLoading} columns={this.abilityColumns} dataSource={abilities}/>
+                                </TabPane>
+                                <TabPane tab={<span><ControlOutlined/>告警规则</span>} key="2">
+                                    告警规则
+                                </TabPane>
+                            </Tabs>
                         </Col>
                     </Row>
                     <EditProductModal onRef={this.bindProductFormRef.bind(this)} refreshList={this.refreshListFromProductModal}/>

@@ -76,6 +76,21 @@ export const getWaringRuleStatusString = (key) => {
 };
 
 /**
+ * 获取产品状态
+ * @param key
+ * @returns {*}
+ */
+export const getProductStatusString = (key) => {
+    if (key === 1) {
+        return '正常'
+    } else if (key === 2) {
+        return '禁用'
+    } else {
+        return '-'
+    }
+};
+
+/**
  * 将后台的比较运算符转换成中文释义
  * @param symbol
  * @returns {string}
