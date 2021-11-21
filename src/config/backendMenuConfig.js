@@ -52,32 +52,20 @@ const backstageMenuList = [
         requireAuth: true, // 是否需要登录后访问
         children: [ // 子菜单列表
             {
+                title: '产品管理',
+                key: '/backstage/device/product',
+                hidden: false,
+                requireAuth: true
+            },
+            {
                 title: '预约管理',
                 key: '/backstage/device/appointment',
                 hidden: false,
                 requireAuth: true
             },
             {
-                title: '告警定义',
-                key: '/backstage/waring/rule',
-                hidden: false,
-                requireAuth: true
-            },
-            {
-                title: '绑定规则',
-                key: '/backstage/client/rule',
-                hidden: false,
-                requireAuth: true
-            },
-            {
                 title: '告警记录',
                 key: '/backstage/waring/result',
-                hidden: false,
-                requireAuth: true
-            },
-            {
-                title: '产品管理',
-                key: '/backstage/device/product',
                 hidden: false,
                 requireAuth: true
             }

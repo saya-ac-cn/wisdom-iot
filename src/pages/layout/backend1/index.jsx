@@ -13,8 +13,6 @@ import Gateway from '../../backend/gateway'
 import Client from '../../backend/client'
 import Appointment from '../../backend/appointment'
 import {requestLogout} from "../../../api";
-import WaringRule from "../../backend/waring";
-import ClientRule from "../../backend/clientrule";
 import WaringResult from "../../backend/waringresult";
 import Collections from "../../backend/collection";
 import Product from "../../backend/product";
@@ -310,8 +308,6 @@ class Backend1 extends Component {
                   <Route path='/backstage/device/gateway' component={Gateway}/>
                   <Route path='/backstage/device/client' component={Client}/>
                   <Route path='/backstage/device/appointment' component={Appointment}/>
-                  <Route path='/backstage/waring/rule' component={WaringRule}/>
-                  <Route path='/backstage/client/rule' component={ClientRule}/>
                   <Route path='/backstage/waring/result' component={WaringResult}/>
                   <Route path='/backstage/history/receive' component={Collections}/>
                   <Route path='/backstage/device/product' component={Product}/>

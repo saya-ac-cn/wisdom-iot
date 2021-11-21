@@ -6,10 +6,10 @@ import {addIotWarringRule, getIotSymbolUnits,editIotWarringRule} from "../../../
 import {openNotificationWithIcon} from "../../../utils/window";
 
 /*
- * 文件名：edit_.jsx
+ * 文件名：rule.jsx
  * 作者：liunengkai
  * 创建日期：4/18/21 - 6:53 PM
- * 描述：修改告警规则
+ * 描述：编辑告警规则
  */
 const {Option} = Select;
 
@@ -19,81 +19,88 @@ class EditWaringRule extends Component {
     formRef = React.createRef();
 
     state = {
-        // 是否显示加载
-        listLoading: false,
         visibleModal:false,
+        // 第二阈值是否为范围运算符
         value2RequireFlag:false,
-        //clientSelectData: [],// 系统返回的设备类别
-        symbolUnitsOption:[],
+        // 联动告警下发指令是否是必须（当选框为请选择时，可不填）
+        commandRequireFlag:false,
+        // 用户可选择的物模型字段
+        propertySelect:[],
+        // 当前产品下的物模型(下拉选框)
+        abilitySelect:[],
+        // 当前告警规则
+        rule:{},
+        // 比较符号
         ruleOperations:[]
     };
 
     handleDisplay = (val) => {
         let _this = this;
+        let {rule,abilities,warrings} = val;
+        let propertySelect = [];
+        let abilitySelect = [];
+        let value2RequireFlag = false;
+        let commandRequireFlag = false;
+        if(abilities){
+            abilitySelect.push((<Option key='-1' value='-1'>请选择</Option>));
+            for(let key  in abilities){
+                const item = abilities[key];
+                abilitySelect.push((<Option key={item.property} value={item.property}>{item.name}</Option>));
+            }
+        }
+        // 页面传入的物模型和告警列表均有值
+        if (abilities&&warrings){
+            // 把已经设置过的物模型剔除
+            propertySelect = abilities.reduce((pre, abilitiesItem) => {
+                if(!warrings.find(warringItem => warringItem.abilityId === abilitiesItem.id)){
+                    pre.push((<Option key={abilitiesItem.id} value={abilitiesItem.id}>{abilitiesItem.name}</Option>));
+                }
+                return pre
+            },[]);
+        }
+        // 页面传入的物模型有值但告警列表均没有值，此时直接把物模型列表放入用户可选的选框数据中
+        if (abilities&&!warrings){
+            // 把已经设置过的物模型剔除
+            propertySelect = abilities.reduce((pre, abilitiesItem) => {
+                pre.push((<Option key={abilitiesItem.id} value={abilitiesItem.id}>{abilitiesItem.name}</Option>));
+                return pre
+            },[]);
+        }
+        let flag = (!rule || !rule.id || -1 === rule.id);
+        if (!flag){
+            // 如果是修改，记得把当前告警关联的物模型添加进去
+            let currentAbility =abilities.find(item => item.id === rule.abilityId);
+            if (currentAbility && null !== currentAbility){
+                propertySelect.push((<Option key={currentAbility.id} value={currentAbility.id}>{currentAbility.name}</Option>));
+            }
+            // 对于当前已经是范围告警，以及当前已经选择了联动字段，第二输入框和联动指令框需要有值
+            if ('-1' !== rule.eventAttribute){
+                commandRequireFlag = true
+            }
+            if ('RANGE' === rule.symbol){
+                value2RequireFlag = true
+            }
+        }
         _this.setState({
-            rule: val,
-            visibleModal: true
-        },function () {
-            if(!val || !val.id || -1 === val.id){
+            rule: rule,
+            visibleModal: true,
+            propertySelect:propertySelect,
+            abilitySelect:abilitySelect,
+            commandRequireFlag:commandRequireFlag,
+            value2RequireFlag:value2RequireFlag
+        },()=> {
+            if(flag){
                 // 避坑：不同的antd版本，可能有差异
-                _this.formRef.current.setFieldsValue({'units':null, 'name':null,'symbol':null,'value1':0,'value2':null,'enable':1});
+                _this.formRef.current.setFieldsValue({'abilityId':null, 'name':null,'symbol':null,'value1':0,'value2':null,'enable':1});
             }else{
                 //注意 initialValues 不能被 setState 动态更新，你需要用 setFieldsValue 来更新。
-                _this.formRef.current.setFieldsValue(val);
+                _this.formRef.current.setFieldsValue(rule);
             }
         });
     };
 
     handleCancel = () => {
         this.setState({visibleModal: false});
-    };
-
-    /**
-     * 获取设备列表
-     * @returns {Promise<void>}
-     */
-
-    // getClientSelectData = async () => {
-    //     let _this = this;
-    //     // 发异步ajax请求, 获取数据
-    //     const {msg, code, data} = await getClientSelectList({keyWord:''});
-    //     if (0 === code) {
-    //         // 利用更新状态的回调函数，渲染下拉选框
-    //         let clientSelectData = [];
-    //         clientSelectData.push((<Option key={-1} value="">请选择</Option>));
-    //         data.forEach(item => {
-    //             clientSelectData.push((<Option key={item.id} value={item.id}>{`${item.name}(${item.gateway.name})`}</Option>));
-    //         });
-    //         _this.setState({
-    //             clientSelectData
-    //         });
-    //     } else {
-    //         openNotificationWithIcon("error", "错误提示", msg);
-    //     }
-    // };
-
-    /**
-     * 获取物理量
-     * @returns {Promise<void>}
-     */
-    getIotSymbolUnits = async () => {
-        let _this = this;
-        // 发异步ajax请求, 获取数据
-        const {msg, code, data} = await getIotSymbolUnits();
-        if (code === 0) {
-            // 利用更新状态的回调函数，渲染下拉选框
-            let symbolUnitsOption = [];
-            // 利用更新状态的回调函数，渲染下拉选框
-            symbolUnitsOption.push((<Option key={-1} value="">请选择</Option>));
-            for(let key  in data){
-                symbolUnitsOption.push((<Option key={key} value={key}>{data[key]}</Option>));
-            }
-            _this.setState({
-                symbolUnitsOption
-            });
-        } else {
-            openNotificationWithIcon("error", "错误提示", msg);
-        }
     };
 
     /**
@@ -116,7 +123,7 @@ class EditWaringRule extends Component {
     };
 
     /**
-     * 符号选择器发送变化
+     * 比较运算符号选择器发送变化
      * @param e
      */
     onSymbolChange = (e) => {
@@ -127,25 +134,48 @@ class EditWaringRule extends Component {
         }
     };
 
+    /**
+     * 物模型字段选择器发送变化
+     * @param e
+     */
+    onAbilityChange = (e) => {
+        if (-1 !== e || '-1' !== e){
+            this.setState({commandRequireFlag: true});
+        }else{
+            this.setState({commandRequireFlag: false});
+        }
+    };
+
     handleSubmit = async () => {
         const _this = this;
-        let checkFiles = ['units', 'name','symbol','value1','enable'];
+        let checkFiles = ['abilityId', 'name','symbol','value1','enable','eventAttribute'];
         if (_this.state.value2RequireFlag){
             checkFiles.push('value2')
+        }
+        if (_this.state.commandRequireFlag){
+            checkFiles.push('eventValue')
         }
         _this.formRef.current.validateFields(checkFiles).then(value => {
             const rule = _this.state.rule;
             let param = {
-                units:value.units,
+                abilityId:value.abilityId,
                 name:value.name,
                 symbol:value.symbol,
                 value1:value.value1,
-                enable:value.enable
+                enable:value.enable,
+                productId:rule.productId
             };
             if (_this.state.value2RequireFlag){
                 param.value2=value.value2
             }else {
                 param.value2=0;
+            }
+            if (_this.state.commandRequireFlag){
+                param.eventAttribute=value.eventAttribute;
+                param.eventValue=value.eventValue
+            }else {
+                param.eventAttribute=-1;
+                param.eventValue=''
             }
             if(!rule || !rule.id || -1 === rule.id){
                 // 添加
@@ -189,11 +219,7 @@ class EditWaringRule extends Component {
     componentDidMount() {
         // 加载页面数据
         const _this = this;
-        // 初始化设备下拉列表数据
         _this.props.onRef(_this);
-        //this.getClientSelectData();
-        // 物理量
-        _this.getIotSymbolUnits();
         _this.getRuleOperation();
         _this.formItemLayout = {
             labelCol: {span: 4},
@@ -202,7 +228,7 @@ class EditWaringRule extends Component {
     };
 
     render() {
-      const {rule,visibleModal,symbolUnitsOption,ruleOperations,value2RequireFlag} = this.state;
+      const {rule,visibleModal,propertySelect,ruleOperations,value2RequireFlag,commandRequireFlag,abilitySelect} = this.state;
       return (
           <Modal
               title={!rule||-1===rule.id?'创建告警规则':'编辑告警规则'}
@@ -213,19 +239,11 @@ class EditWaringRule extends Component {
               cancelText='取消'
               okText='保存'>
               <Form {...this.formItemLayout} ref={this.formRef}>
-                  {/*<Card title="设备信息" bordered={false}>*/}
-                      {/*<Form.Item label={<span>设备&nbsp;<Tooltip title="告警的规则将要作用在哪个设备上"><QuestionCircleOutlined /></Tooltip></span>}*/}
-                                 {/*name="clientId" initialValue={!rule || !rule.clientId ? '' :rule.clientId} rules={[{required: true, message: '请选择网关'}]} {...this.formItemLayout}>*/}
-                          {/*<Select placeholder="请选择设备" allowClear>*/}
-                              {/*{clientSelectData}*/}
-                          {/*</Select>*/}
-                      {/*</Form.Item>*/}
-                  {/*</Card>*/}
                   <Card title="告警字段" bordered={false}>
-                      <Form.Item label={<span>字段&nbsp;<Tooltip title="告警规则将对该字段进行判断"><QuestionCircleOutlined /></Tooltip></span>}
-                                 name="units" initialValue={!rule || !rule.units ? '' :rule.units} rules={[{required: true, message: '请选择字段'}]} {...this.formItemLayout}>
+                      <Form.Item label={<span>字段&nbsp;<Tooltip title="告警字段来源于本产品下的物模型，已经设置过的字段不能重复执行。告警规则将对该字段进行判断"><QuestionCircleOutlined /></Tooltip></span>}
+                                 name="abilityId" initialValue={!rule || !rule.abilityId ? '' :rule.abilityId} rules={[{required: true, message: '请选择字段'}]} {...this.formItemLayout}>
                           <Select placeholder="请选择字段" allowClear>
-                              {symbolUnitsOption}
+                              {propertySelect}
                           </Select>
                       </Form.Item>
                   </Card>
@@ -246,6 +264,18 @@ class EditWaringRule extends Component {
                       <Form.Item label={<span>第二阈值&nbsp;<Tooltip title="仅当运算符是范围区间时，第一阈值将作为左闭区间比较，第二阈值将作为右闭区间比较。非范围运算符时，第二阈值不参与比较"><QuestionCircleOutlined /></Tooltip></span>}  name="value2" initialValue={!rule || !rule.value2 ? 0 :rule.value2}
                                  rules={[{required: value2RequireFlag, message: '请输入第二阈值'}]} {...this.formItemLayout}>
                           <InputNumber min={0} max={999}/>
+                      </Form.Item>
+                  </Card>
+                  <Card title="事件联动" bordered={false}>
+                      <Form.Item label={<span>指令&nbsp;<Tooltip title="触发告警后，将向这个功能指令下发的指令值"><QuestionCircleOutlined /></Tooltip></span>}
+                      name="eventAttribute" initialValue={!rule || !rule.eventAttribute ? '-1' :rule.eventAttribute} rules={[{required:true,message: '请选择指令'}]} {...this.formItemLayout}>
+                          <Select placeholder="请选择联动指标" onChange={this.onAbilityChange}>
+                            {abilitySelect}
+                          </Select>
+                      </Form.Item>
+                      <Form.Item label={<span>指令值&nbsp;<Tooltip title="触发告警后，将向这个功能指令下发的指令值"><QuestionCircleOutlined /></Tooltip></span>}  name="eventValue" initialValue={!rule || !rule.eventValue ? '' :rule.eventValue}  getValueFromEvent={ (e) => clearTrimValueEvent(e)}
+                                 rules={[{required:commandRequireFlag,message: '请填写触发告警后下发的指令'},{min: 1, message: '长度在 1 到 6 个字符'},{max: 6, message: '长度在 1 到 6 个字符'}]} {...this.formItemLayout}>
+                          <Input placeholder='例如：0'/>
                       </Form.Item>
                   </Card>
                   <Card title='数据状态' bordered={false}>
