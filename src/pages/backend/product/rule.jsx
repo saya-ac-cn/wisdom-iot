@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import {Input, Select, Modal, Form, Card, Tooltip, InputNumber, Radio} from "antd";
 import {QuestionCircleOutlined} from "@ant-design/icons";
 import {clearTrimValueEvent} from "../../../utils/string";
-import {addIotWarringRule, getIotSymbolUnits,editIotWarringRule} from "../../../api";
+import {addIotWarringRule,editIotWarringRule} from "../../../api";
 import {openNotificationWithIcon} from "../../../utils/window";
 
 /*

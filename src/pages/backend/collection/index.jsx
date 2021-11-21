@@ -2,7 +2,7 @@ import React, {Component} from 'react';
 import DocumentTitle from "react-document-title";
 import {Button, Col, Input, Table, Form, DatePicker, Select} from "antd";
 import {ReloadOutlined, SearchOutlined} from "@ant-design/icons";
-import {getClientIotCollectionPage, getIotSymbolUnits} from "../../../api";
+import {getClientIotCollectionPage} from "../../../api";
 import {openNotificationWithIcon} from "../../../utils/window";
 import './index.less'
 import moment from "moment";
@@ -13,7 +13,6 @@ import moment from "moment";
  * 描述：告警规则
  */
 const {RangePicker} = DatePicker;
-const {Option} = Select;
 
 // 定义组件（ES6）
 class Collections extends Component {
@@ -31,7 +30,6 @@ class Collections extends Component {
         listLoading: false,
         filters: {
             clientId: '',
-            units: '',
             // 查询的日期
             date: null,
             beginTime: null,// 搜索表单的开始时间
@@ -66,25 +64,27 @@ class Collections extends Component {
                 }
             },
             {
-                title: '最后心跳',
-                render: (text, record) => {
-                    return record.iotClient ? record.iotClient.lastLinkTime : '-';
-                }
-            },
-            {
                 title: '采集名称',
                 render: (text, record) => {
-                    return _this.transformSymbolUnits(record.units);
+                    return (!record.abilities || !record.abilities.name)?null:record.abilities.name;
                 }
             },
             {
                 title: '采集值',
-                dataIndex: 'value'
+                render: (text, record) => {
+                    return this.transformSymbolUnits(record)
+                }
             },
             {
                 title: '采集时间',
                 dataIndex: 'collectTime', // 显示数据对应的属性名
             },
+            {
+                title: '最后心跳',
+                render: (text, record) => {
+                    return record.iotClient ? record.iotClient.lastLinkTime : '-';
+                }
+            }
         ]
     };
 
@@ -120,7 +120,6 @@ class Collections extends Component {
             nowPage: _this.state.nowPage,
             pageSize: _this.state.pageSize,
             clientId: _this.state.filters.clientId,
-            units: _this.state.filters.units,
             beginTime: _this.state.filters.beginTime,
             endTime: _this.state.filters.endTime,
         };
@@ -142,12 +141,11 @@ class Collections extends Component {
         }
     };
 
-    transformSymbolUnits = (symbol) => {
-        let _this = this;
-        if (!_this.state.symbolUnits || !symbol) {
-            return '-'
+    transformSymbolUnits = (val) => {
+        if (!val.abilities || !val.abilities.standardUnit || !val.abilities.standardUnit.symbol) {
+            return val.value
         } else {
-            return _this.state.symbolUnits[symbol];
+            return `${val.value}(${val.abilities.standardUnit.symbol})`;
         }
     };
 
@@ -158,7 +156,6 @@ class Collections extends Component {
         filters.beginTime = null;
         filters.endTime = null;
         filters.clientId = '';
-        filters.units = '';
         _this.setState({
             nowPage: 1,
             filters: filters
@@ -177,23 +174,6 @@ class Collections extends Component {
             nowPage: 1,
             filters
         })
-    };
-
-    /**
-     * 采集名称状态选框发生改变
-     * @param value
-     */
-    onChangeUnits = (value) => {
-        console.log('units',value)
-        let _this = this;
-        let {filters} = _this.state;
-        filters.units = value;
-        _this.setState({
-            filters,
-            nowPage: 1,
-        }, function () {
-            _this.getDatas()
-        });
     };
 
     // 日期选择发生变化
@@ -217,37 +197,9 @@ class Collections extends Component {
     };
 
     /**
-     * 获取物理量
-     * @returns {Promise<void>}
-     */
-    getIotSymbolUnits = async () => {
-        let _this = this;
-        // 发异步ajax请求, 获取数据
-        const {msg, code, data} = await getIotSymbolUnits();
-        if (code === 0) {
-            const symbolUnits = data;
-            // 利用更新状态的回调函数，渲染下拉选框
-            let symbolUnitsOption = [];
-            symbolUnitsOption.push((<Option key={-1} value="">请选择</Option>));
-            for (let key  in symbolUnits) {
-                let item = symbolUnits[key];
-                symbolUnitsOption.push((<Option key={key} value={key}>{item}</Option>));
-            }
-            _this.setState({
-                symbolUnitsOption, symbolUnits
-            });
-        } else {
-            openNotificationWithIcon("error", "错误提示", msg);
-        }
-    };
-
-
-    /**
      * 执行异步任务: 发异步ajax请求
      */
     componentDidMount() {
-        // 加载物理量
-        this.getIotSymbolUnits();
         // 加载页面数据
         this.getDatas();
         // 初始化表格属性设置
@@ -257,7 +209,7 @@ class Collections extends Component {
 
     render() {
         // 读取状态数据
-        const {datas, dataTotal, nowPage, pageSize, listLoading, filters,symbolUnitsOption} = this.state;
+        const {datas, dataTotal, nowPage, pageSize, listLoading, filters} = this.state;
         let {beginTime, endTime} = filters;
         let rangeDate;
         if (beginTime !== null && endTime !== null) {
@@ -274,13 +226,6 @@ class Collections extends Component {
                                 <Input type='number' value={filters.clientId}
                                        onChange={e => this.inputChange('clientId', e)}
                                        placeholder='按设备id检索'/>
-                            </Form.Item>
-                            <Form.Item label="采集名称">
-                                <Select value={filters.units} className="queur-type" showSearch
-                                        onChange={this.onChangeUnits}
-                                        placeholder="请选择采集名称">
-                                    {symbolUnitsOption}
-                                </Select>
                             </Form.Item>
                             <Form.Item label="采集时间">
                                 <RangePicker value={rangeDate} onChange={this.onChangeDate}/>
