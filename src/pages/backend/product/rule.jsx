@@ -42,7 +42,7 @@ class EditWaringRule extends Component {
         let value2RequireFlag = false;
         let commandRequireFlag = false;
         if(abilities){
-            abilitySelect.push((<Option key='-1' value='-1'>请选择</Option>));
+            abilitySelect.push((<Option key='-1' value='-1'>不指定联动规则</Option>));
             for(let key  in abilities){
                 const item = abilities[key];
                 abilitySelect.push((<Option key={item.property} value={item.property}>{item.name}</Option>));

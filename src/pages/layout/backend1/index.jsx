@@ -16,6 +16,7 @@ import {requestLogout} from "../../../api";
 import WaringResult from "../../backend/waringresult";
 import Collections from "../../backend/collection";
 import Product from "../../backend/product";
+import SendHistory from "../../backend/send";
 /*
  * 文件名：index.jsx
  * 作者：saya
@@ -311,6 +312,7 @@ class Backend1 extends Component {
                   <Route path='/backstage/waring/result' component={WaringResult}/>
                   <Route path='/backstage/history/receive' component={Collections}/>
                   <Route path='/backstage/device/product' component={Product}/>
+                  <Route path='/backstage/history/send' component={SendHistory}/>
                   {/*默认、及匹配不到时的页面*/}
                   <Redirect to='/backstage/api/mana'/>
                 </Switch>

@@ -2,7 +2,7 @@ import React, {Component} from 'react';
 import DocumentTitle from "react-document-title";
 import {Button, Col, Input, Table, Form, DatePicker, Select} from "antd";
 import {ReloadOutlined, SearchOutlined} from "@ant-design/icons";
-import {getClientIotCollectionPage} from "../../../api";
+import {getHistoryCommand} from "../../../api";
 import {openNotificationWithIcon} from "../../../utils/window";
 import './index.less'
 import moment from "moment";
@@ -10,12 +10,12 @@ import moment from "moment";
  * 文件名：index.jsx
  * 作者：liunengkai
  * 创建日期：4/18/21 - 4:27 PM
- * 描述：告警规则
+ * 描述：下发历史
  */
 const {RangePicker} = DatePicker;
 
 // 定义组件（ES6）
-class Collections extends Component {
+class SendHistory extends Component {
 
     state = {
         // 返回的单元格数据
@@ -64,20 +64,12 @@ class Collections extends Component {
                 }
             },
             {
-                title: '采集名称',
-                render: (text, record) => {
-                    return (!record.abilities || !record.abilities.name)?null:record.abilities.name;
-                }
+                title: '指令',
+                dataIndex: 'command', // 显示数据对应的属性名
             },
             {
-                title: '采集值',
-                render: (text, record) => {
-                    return this.transformSymbolUnits(record)
-                }
-            },
-            {
-                title: '采集时间',
-                dataIndex: 'collectTime', // 显示数据对应的属性名
+                title: '下发时间',
+                dataIndex: 'excuteTime', // 显示数据对应的属性名
             },
             {
                 title: '最后心跳',
@@ -126,7 +118,7 @@ class Collections extends Component {
         // 在发请求前, 显示loading
         _this.setState({listLoading: true});
         // 发异步ajax请求, 获取数据
-        const {msg, code, data} = await getClientIotCollectionPage(para);
+        const {msg, code, data} = await getHistoryCommand(para);
         // 在请求完成后, 隐藏loading
         _this.setState({listLoading: false});
         if (code === 0) {
@@ -218,8 +210,8 @@ class Collections extends Component {
             rangeDate = [null, null]
         }
         return (
-            <DocumentTitle title='物联网智慧家庭·历史采集'>
-                <section className="collection-v1">
+            <DocumentTitle title='物联网智慧家庭·下发历史'>
+                <section className="send-v1">
                     <Col span={24} className="toolbar">
                         <Form layout="inline">
                             <Form.Item label="终端ID">
@@ -227,7 +219,7 @@ class Collections extends Component {
                                        onChange={e => this.inputChange('clientId', e)}
                                        placeholder='按设备id检索'/>
                             </Form.Item>
-                            <Form.Item label="采集时间">
+                            <Form.Item label="下发时间">
                                 <RangePicker value={rangeDate} onChange={this.onChangeDate}/>
                             </Form.Item>
                             <Form.Item>
@@ -259,4 +251,4 @@ class Collections extends Component {
 }
 
 // 对外暴露
-export default Collections;
+export default SendHistory;

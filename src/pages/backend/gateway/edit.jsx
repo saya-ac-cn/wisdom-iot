@@ -40,7 +40,6 @@ class GateWayModal extends Component {
    */
   handleDisplay = (val) => {
     let _this = this;
-    console.log('val',val);
     _this.setState({
       gateWay: val,
       visibleModal: true
@@ -192,7 +191,7 @@ class GateWayModal extends Component {
     }
   };
 
-  /*
+  /**
    * 为第一次render()准备数据
    * 因为要异步加载数据，所以方法改为async执行
    */

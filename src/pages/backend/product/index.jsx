@@ -255,9 +255,15 @@ class Product extends Component {
         // 在请求完成后, 隐藏loading
         let products = [];
         let productMap = {};
+        let alreadySelectProduct = null;
         if (code === 0) {
+            let index = 0;
             for (let key  in data) {
                 let item = data[key];
+                if (0 === index){
+                  // 设置第一个为选中
+                  alreadySelectProduct = item.id;
+                }
                 productMap[item.id] = item;
                 products.push(<Menu.Item key={item.id}><div style={{width:"100%",display:"flex",alignItems:"center",justifyContent: "space-between"}}><span>{item.name}</span>
                     <Tooltip placement="right" trigger='click' color='#fff' title={<div>
@@ -269,11 +275,15 @@ class Product extends Component {
                         <EllipsisOutlined/>
                     </Tooltip>
                 </div></Menu.Item>)
+              index = index + 1
             }
             _this.setState({
                 products:products,
                 productMap:productMap
             })
+          if (alreadySelectProduct){
+            _this.productSelect({key:alreadySelectProduct})
+          }
         } else {
             openNotificationWithIcon("error", "错误提示", msg);
         }
@@ -553,7 +563,7 @@ class Product extends Component {
                 <section className="product-v1">
                     <Row className="product-data">
                         <Col span={5} className="tree-area">
-                            <Menu mode="inline" defaultOpenKeys={['-1']} onSelect={this.productSelect}>
+                            <Menu mode="inline" defaultSelectedKeys={[(!alreadySelectProduct?'1':(alreadySelectProduct+''))]} defaultOpenKeys={['-1']} onSelect={this.productSelect}>
                                 <SubMenu key="-1" icon={<MenuOutlined />} title={<div style={{width:"100%",display:"flex",alignItems:"center",justifyContent: "space-between"}}><span>全部</span><PlusOutlined onClick={this.handleModalProductAdd}/></div>}>
                                     {products}
                                 </SubMenu>

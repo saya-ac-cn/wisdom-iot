@@ -48,14 +48,14 @@ export const getClientSelectList = params => ajax(`${backendAPI}/client/select`,
 // 获取产品下拉选框
 export const getIotProductList = params => ajax(`${backendAPI}/product/list`, params, 'GET');
 
-// 指令预约
+// 调度计划
 export const getIotAppointmentPage = params => ajax(`${backendAPI}/appointment`, params, 'GET');
-// 添加预约
+// 添加调度计划
 export const addIotAppointment = params => ajax(`${backendAPI}/appointment`, params, 'POST');
-// 修改预约
+// 修改调度计划
 export const editIotAppointment = params => ajax(`${backendAPI}/appointment`, params, 'PUT');
-// 删除预约
-export const deleteIotAppointment = params => ajax(`${backendAPI}/appointment`, params, 'DELETE');
+// 删除调度计划
+export const deleteIotAppointment = code => ajax(`${backendAPI}/appointment/${code}`, {}, 'DELETE');
 
 
 // 获取所有的基本物理量
@@ -94,3 +94,5 @@ export const getStandardList = () => ajax(`${backendAPI}/standard`,{},'GET')
 
 // 查看采集信息
 export const getClientIotCollectionPage = params => ajax(`${backendAPI}/collection`, params, 'GET');
+// 查看历史执行过的指令
+export const getHistoryCommand = params => ajax(`${backendAPI}/command/history`, params, 'GET');

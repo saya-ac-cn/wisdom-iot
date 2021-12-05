@@ -58,7 +58,7 @@ const backstageMenuList = [
                 requireAuth: true
             },
             {
-                title: '预约管理',
+                title: '调度计划',
                 key: '/backstage/device/appointment',
                 hidden: false,
                 requireAuth: true

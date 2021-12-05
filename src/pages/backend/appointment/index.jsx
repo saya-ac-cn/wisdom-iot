@@ -10,12 +10,7 @@ import {
 } from "@ant-design/icons";
 import moment from "moment";
 import './index.less'
-import {
-  getIotAppointmentPage,
-  addIotAppointment,
-  editIotAppointment,
-  deleteIotAppointment
-} from "../../../api";
+import {getIotAppointmentPage, deleteIotAppointment} from "../../../api";
 import {openNotificationWithIcon} from "../../../utils/window";
 import {getAppointmentExcuteStatusString} from "../../../utils/enum";
 import EditAppointment from "./edit";
@@ -30,7 +25,7 @@ const {Option} = Select;
 // 定义组件（ES6）
 class Appointment extends Component {
 
-  formRef = React.createRef();
+  editRef = React.createRef();
 
   state = {
     // 返回的单元格数据
@@ -52,7 +47,6 @@ class Appointment extends Component {
       selectStatusType: ''//用户选择的状态类别
     },
     statusType: [],// 指令下发状态类别
-    modalStatus: 0, // 标识添加/更新的确认框是否显示, 0: 都不显示, 1: 显示添加, 2: 显示更新, 3: 显示详情
   };
 
   /*
@@ -61,7 +55,7 @@ class Appointment extends Component {
   initColumns = () => {
     this.columns = [
       {
-        title: '预约名',
+        title: '调度名',
         dataIndex: 'name', // 显示数据对应的属性名
       },
       {
@@ -77,17 +71,29 @@ class Appointment extends Component {
         }
       },
       {
-        title: '地址',
+        title: '设备地址',
         render: (text,record) => {
           return record.iotClient.gateway.address || null;
         }
       },
       {
-        title: '执行指令',
-        dataIndex: 'command', // 显示数据对应的属性名
+        title: '指令名',
+        render: (text, record) => {
+          return !record.iotAbility?'-':record.iotAbility.name
+        }
       },
       {
-        title: '执行时间',
+        title: '指令值',
+        render: (text, record) => {
+          return this.formatScope(record);
+        }
+      },
+      {
+        title: '执行规则',
+        dataIndex: 'cron', // 显示数据对应的属性名
+      },
+      {
+        title: '最后执行时间',
         dataIndex: 'excuteTime', // 显示数据对应的属性名
       },
       {
@@ -113,6 +119,28 @@ class Appointment extends Component {
         ),
       },
     ]
+  };
+
+  /**
+   * 格式化数值范围
+   * @param record
+   * @returns {string}
+   */
+  formatScope = (record) => {
+    const ability = record.iotAbility;
+    if (!ability){
+      return record.command;
+    }
+    if ((ability.type)&&(1===ability.type)) {
+      return record.command;
+    }else{
+      // 枚举类型
+      if (ability.scope){
+        let scope = JSON.parse(ability.scope);
+        return scope[record.command];
+      }
+      return record.command;
+    }
   };
 
   // 回调函数,改变页宽大小
@@ -256,133 +284,51 @@ class Appointment extends Component {
     })
   };
 
-  /*
-  * 显示添加的弹窗
-  */
+  /**
+   * 显示添加的弹窗
+   */
   handleModalAdd = () => {
-    this.setState({
-      modalStatus: 1
-    })
-  };
-
-  /*
-  * 显示修改的弹窗
-  */
-  handleModalEdit = (value) => {
-    this.lineDate = value;
-    // 查看执行时间，历史数据不能更改
-    let excuteTime = moment(value.excuteTime,'YYYY-MM-DD HH:mm:ss')
-    let now = moment()
-    if (excuteTime.diff(now) <0 && value.status !== 1){
-      openNotificationWithIcon("error", "错误提示", '您要修改的预约指令已经执行，不能再次修改。');
-      return
-    }
-    this.setState({
-      modalStatus: 2
-    })
-  };
-
-  /*
-  * 响应点击取消: 隐藏弹窗
-  */
-  handleModalCancel = (type) => {
-    if (type){
-      // 清除输入数据
-      this.formRef.current.formRef.current.resetFields();
-    }
-    // 隐藏确认框
-    this.setState({
-      modalStatus: 0
-    })
+    this.editRef.handleDisplay({});
   };
 
   /**
-   * 提交表单，添加预约
+   * 显示修改的弹窗
+   * @param value
+   * @returns {Promise<void>}
    */
-  handleAddAppointment = (e) => {
-    e.preventDefault();
+  handleModalEdit = async (value) => {
     let _this = this;
-    _this.formRef.current.formRef.current.validateFields(["clientId","name","command","excuteTime"])
-      .then(async (values) => {
-        let para = {
-          clientId: values.clientId,
-          name: values.name,
-          command: values.command,
-          excuteTime: (values.excuteTime).format('YYYY-MM-DD HH:mm:ss')
-        }
-        _this.setState({listLoading: true});
-        const {msg, code} = await addIotAppointment(para)
-        _this.setState({listLoading: false});
-        if (code === 0) {
-          openNotificationWithIcon("success", "操作结果", "添加成功");
-          // 重置表单
-          _this.formRef.current.formRef.current.resetFields();
-          // 关闭弹窗
-          _this.handleModalCancel(true)
-          // 重新加载数据
-          _this.getDatas();
-        } else {
-          openNotificationWithIcon("error", "错误提示", msg);
-        }
-      }).catch(errorInfo => {
-      console.log(errorInfo)
-    });
-  }
+    _this.editRef.handleDisplay(value);
+  };
 
   /**
-   * 提交表单，修改预约
+   * 添加或者修改组件ref绑定
+   * @param ref
    */
-  handleEditAppointment = (e) => {
-    e.preventDefault();
-    let _this = this;
-    _this.formRef.current.formRef.current.validateFields(["clientId","name","command","excuteTime"])
-      .then(async (values) => {
-        let para = {
-          id: this.lineDate.id,
-          clientId: values.clientId,
-          name: values.name,
-          command: values.command,
-          excuteTime: (values.excuteTime).format('YYYY-MM-DD HH:mm:ss')
-        }
-        _this.setState({listLoading: true});
-        const {msg, code} = await editIotAppointment(para)
-        _this.setState({listLoading: false});
-        if (code === 0) {
-          openNotificationWithIcon("success", "操作结果", "添加成功");
-          // 重置表单
-          _this.formRef.current.formRef.current.resetFields();
-          // 关闭弹窗
-          _this.handleModalCancel(true)
-          // 重新加载数据
-          _this.getDatas();
-        } else {
-          openNotificationWithIcon("error", "错误提示", msg);
-        }
-      }).catch(errorInfo => {
-      console.log(errorInfo)
-    });
-  }
+  bindAppointmentFormRef = (ref) => {
+    this.editRef = ref
+  };
 
-  /*
-  * 删除预约
-  */
+  /**
+   * 绑定刷新事件
+   */
+  refreshListFromAppointmentModal = () =>{
+    this.getDatas();
+  };
+
+  /**
+   * 删除预约
+   * @param value
+   */
   handleDellAppointment = (value) => {
-    // 查看执行时间，历史数据不能删除
-    let excuteTime = moment(value.excuteTime,'YYYY-MM-DD HH:mm:ss')
-    let now = moment()
-    if (excuteTime.diff(now) <0 && value.status !== 1){
-      openNotificationWithIcon("error", "错误提示", '您要删除的预约指令已经执行，不能允许删除历史数据。');
-      return
-    }
     let _this = this;
     Modal.confirm({
       title: '删除确认',
-      content: `确认删除名字为:"${value.name}"的预约吗?一旦删除，该预约将不会下发到设备`,
+      content: `确认删除名字为:"${value.name}"的调度计划吗?一旦删除，该调度指令将不会下发到设备`,
       onOk: async () => {
         // 在发请求前, 显示loading
         _this.setState({listLoading: true});
-        let para = { id: value.id };
-        const {msg, code} = await deleteIotAppointment(para);
+        const {msg, code} = await deleteIotAppointment(value.code);
         // 在请求完成后, 隐藏loading
         _this.setState({listLoading: false});
         if (code === 0) {
@@ -395,21 +341,15 @@ class Appointment extends Component {
     })
   };
 
-  /*
-   *为第一次render()准备数据
-   * 因为要异步加载数据，所以方法改为async执行
+  /**
+   * 执行异步任务: 发异步ajax请求
    */
-  componentWillMount() {
+  componentDidMount() {
     // 初始化表格属性设置
     this.initColumns();
     // 初始化设备状态数
     this.initStatusSelect()
-  };
-
-  /*
-  执行异步任务: 发异步ajax请求
-   */
-  componentDidMount() {
+    this.refreshListFromAppointmentModal = this.refreshListFromAppointmentModal.bind(this);
     // 加载页面数据
     this.getDatas();
   };
@@ -417,8 +357,6 @@ class Appointment extends Component {
   render() {
     // 读取状态数据
     const {datas, dataTotal, nowPage, pageSize, listLoading,filters,statusType, modalStatus} = this.state;
-    // 读取所选中的行数据
-    const lineDate = this.lineDate || {}; // 如果还没有指定一个空对象
     let {beginTime,endTime} = filters;
     let rangeDate;
     if (beginTime !== null && endTime !== null){
@@ -427,13 +365,13 @@ class Appointment extends Component {
       rangeDate = [null,null]
     }
     return (
-      <DocumentTitle title='物联网智慧家庭·预约管理'>
+      <DocumentTitle title='物联网智慧家庭·调度计划'>
         <section className="appointment-v1">
           <Col span={24} className="toolbar">
             <Form layout="inline">
-              <Form.Item label="预约名">
+              <Form.Item label="计划名">
                 <Input type='text' value={filters.name} onChange={this.nameInputChange}
-                       placeholder='按预约名检索'/>
+                       placeholder='按计划名检索'/>
               </Form.Item>
               <Form.Item label="设备状态">
                 <Select value={filters.selectStatusType} className="queur-type" showSearch onChange={this.onChangeStatusType}
@@ -462,7 +400,7 @@ class Appointment extends Component {
             </Form>
           </Col>
           <Col span={24} className="dataTable">
-            <Table size="middle" rowKey="id" loading={listLoading} columns={this.columns} dataSource={datas}
+            <Table size="middle" rowKey="code" loading={listLoading} columns={this.columns} dataSource={datas}
                    pagination={{
                      current:nowPage,
                      showTotal: () => `当前第${nowPage}页 共${dataTotal}条`,
@@ -471,26 +409,7 @@ class Appointment extends Component {
                      onChange: this.changePage,
                    }}/>
           </Col>
-          <Modal
-            title="添加预约"
-            width="50%"
-            visible={modalStatus === 1}
-            closable={true}
-            maskClosable={false}
-            onOk={this.handleAddAppointment}
-            onCancel={()=>this.handleModalCancel(false)}>
-            <EditAppointment ref={this.formRef} appointment={this.lineDate || {}}/>
-          </Modal>
-          <Modal
-            title="修改预约"
-            width="50%"
-            visible={modalStatus === 2}
-            closable={true}
-            maskClosable={false}
-            onOk={this.handleEditAppointment}
-            onCancel={()=>this.handleModalCancel(false)}>
-            <EditAppointment ref={this.formRef} appointment={this.lineDate || {}}/>
-          </Modal>
+          <EditAppointment onRef={this.bindAppointmentFormRef.bind(this)} refreshList={this.refreshListFromAppointmentModal}/>
         </section>
       </DocumentTitle>
     );
