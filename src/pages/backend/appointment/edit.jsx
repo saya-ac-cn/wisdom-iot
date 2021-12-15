@@ -240,7 +240,7 @@ class EditAppointment extends Component {
   render() {
     const {clientSelectData,appointment,visibleModal,abilitySelect,dynamicCommand} = this.state;
     return (
-      <Modal title={!appointment.code ? '创建调度计划':'编辑调度计划'} visible={visibleModal} maskClosable={false} width="50%" okText='保存' onOk={this.handleSubmit} onCancel={this.handleCancel}>
+      <Modal title={!appointment.code ? '创建调度计划':'编辑调度计划'} visible={visibleModal} maskClosable={false} width="60%" okText='保存' onOk={this.handleSubmit} onCancel={this.handleCancel}>
         <Form {...this.formItemLayout} ref={this.formRef}>
           <Card title="设备信息" bordered={false}>
             <Form.Item label={<span>设备&nbsp;<Tooltip title="调度指令将要作用在哪个设备上"><QuestionCircleOutlined /></Tooltip></span>}
