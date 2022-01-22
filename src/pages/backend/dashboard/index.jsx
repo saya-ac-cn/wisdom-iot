@@ -3,7 +3,8 @@ import {Row, Col, Card, List, Skeleton, Modal, Select, Avatar} from "antd";
 import {SyncOutlined,WarningOutlined} from '@ant-design/icons';
 import DocumentTitle from 'react-document-title'
 import "./index.less"
-import {getLatestWarning} from "../../../api";
+import {getLatestWarning,getPre7DayCollect} from "../../../api";
+import { Line } from '@ant-design/charts';
 import {openNotificationWithIcon} from "../../../utils/window";
 /*
  * 文件名：index.jsx
@@ -19,6 +20,51 @@ class DashBoard extends Component {
     // 最近的告警列表数据
     latestWarningList: [],
     latestWarningListLoading: false,
+    uploadDateLoading: false,
+    uploadDate : [],
+    uploadDateChartConfig:{
+      xField: 'date',
+      yField: 'value',
+      tooltip: {
+        customContent: (title, items) => {
+          return (
+            <>
+              <h5 style={{ marginTop: 16 }}>{title}</h5>
+              <ul style={{ paddingLeft: 0 }}>
+                {items?.map((item, index) => {
+                  const { name, value, color } = item;
+                  return (
+                    <li
+                      key={name}
+                      className="g2-tooltip-list-item"
+                      data-index={index}
+                      style={{ marginBottom: 4, display: 'flex', alignItems: 'center' }}
+                    >
+                      <span className="g2-tooltip-marker" style={{ backgroundColor: color }}/>
+                      <span
+                        style={{ display: 'inline-flex', flex: 1, justifyContent: 'space-between' }}
+                      >
+                      <span style={{ margiRight: 16 }}>上报次数:</span>
+                      <span className="g2-tooltip-list-item-value">{value}次</span>
+                    </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
+          );
+        },
+      },
+      point: {
+        size: 5,
+        shape: 'diamond',
+        style: {
+          fill: 'white',
+          stroke: '#2593fc',
+          lineWidth: 2,
+        },
+      },
+    }
   };
 
   /**
@@ -45,15 +91,36 @@ class DashBoard extends Component {
   }
 
   /**
+   * 获取最近7天的数据上报情况
+   * @returns {Promise<void>}
+   */
+  getPre7DayCollectList = async () => {
+    const _this = this;
+    _this.setState({uploadDateLoading: true});
+    const {msg, code, data} = await getPre7DayCollect();
+    _this.setState({uploadDateLoading: false});
+    if (code === 0) {
+      let result = [];
+      for(let key in data){
+        result.push({'date':key,'value':data[key]})
+      }
+      _this.setState({uploadDate: result});
+    } else {
+      openNotificationWithIcon("error", "错误提示", msg);
+    }
+  }
+
+  /**
    * 执行异步任务: 发异步ajax请求
    */
   componentDidMount() {
     this.getLatestWarningList()
+    this.getPre7DayCollectList()
   }
 
 
   render() {
-    const {latestWarningListLoading,latestWarningList} = this.state;
+    const {latestWarningListLoading,latestWarningList,uploadDate,uploadDateChartConfig,uploadDateLoading} = this.state;
     return (
       <DocumentTitle title='物联网智慧家庭·远程控制'>
         <section className="chart-v1">
@@ -62,28 +129,32 @@ class DashBoard extends Component {
               <Row gutter={[16, 16]}>
                 <Col span={11}>
                   <Card title={<span className='operation-color'>告警事件</span>} hoverable={true} extra={<SyncOutlined onClick={this.getLatestWarningList} className='operation-color'/>}>
-                    <List
-                      className="demo-loadmore-list"
-                      loading={latestWarningListLoading}
-                      itemLayout="horizontal"
-                      dataSource={latestWarningList}
-                      renderItem={item => (
-                        <List.Item>
-                          <List.Item.Meta
-                            avatar={<Avatar icon={<WarningOutlined />} style={{ color: '#f56a00', backgroundColor: '#fde3cf' }}/>}
-                            title={item.topic}
-                            description={`${!item.iotClient?'':item.iotClient.name}${item.content}[${item.createTime}]`}
-                          />
-                        </List.Item>
-                      )}
-                    />
+                    {
+                      latestWarningListLoading?
+                        <Skeleton active/>:
+                        <List
+                          className="demo-loadmore-list"
+                          itemLayout="horizontal"
+                          dataSource={latestWarningList}
+                          renderItem={item => (
+                            <List.Item>
+                              <List.Item.Meta
+                                avatar={<Avatar icon={<WarningOutlined />} style={{ color: '#f56a00', backgroundColor: '#fde3cf' }}/>}
+                                title={item.topic}
+                                description={`${!item.iotClient?'':item.iotClient.name}${item.content}[${item.createTime}]`}
+                              />
+                            </List.Item>
+                          )}
+                        />
+                    }
                   </Card>
                 </Col>
                 <Col span={13}>
-                  <Card title={<span className='operation-color'>上报趋势</span>} hoverable={true} extra={<SyncOutlined className='operation-color'/>}>
-                    <p>Card content</p>
-                    <p>Card content</p>
-                    <p>Card content</p>
+                  <Card title={<span className='operation-color'>上报趋势</span>} hoverable={true} extra={<SyncOutlined onClick={this.getPre7DayCollectList} className='operation-color'/>}>
+                    {
+                      uploadDateLoading?
+                      <Skeleton active/>:<Line {...uploadDateChartConfig} data={uploadDate}/>
+                    }
                   </Card>
                 </Col>
                 <Col span={24}>
