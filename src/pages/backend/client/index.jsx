@@ -8,6 +8,7 @@ import {
   EyeOutlined,
   PlusOutlined,
   ReloadOutlined,
+  DashboardOutlined,
   SearchOutlined
 } from "@ant-design/icons";
 import moment from "moment";
@@ -16,9 +17,9 @@ import {
   getIotClientPage,
   deleteIotClient} from "../../../api";
 import {openNotificationWithIcon} from "../../../utils/window";
-import EditClientModal from "../client/edit";
+import EditClientModal from "./edit";
 import ViewClientModal from "./view";
-
+import CtrlClientModal from "./ctrl";
 
 /*
  * 文件名：index.jsx
@@ -34,6 +35,8 @@ class Client extends Component {
   editRef = React.createRef();
 
   viewRef = React.createRef();
+
+  ctrlRef = React.createRef();
 
   state = {
     // 返回的单元格数据
@@ -76,24 +79,6 @@ class Client extends Component {
         dataIndex:'productName',
       },
       {
-        title: '网关名',
-        render: (text,record) => {
-          return record.gateway.name || null;
-        }
-      },
-      {
-        title: '网关编码',
-        render: (text,record) => {
-          return record.gateway.uuid || null;
-        }
-      },
-      {
-        title: '网关地址',
-        render: (text,record) => {
-          return record.gateway.address || null;
-        }
-      },
-      {
         title: '是否启用',
         render: (text,record) => {
           return getClientEnableString(record.enable)
@@ -109,9 +94,11 @@ class Client extends Component {
           <div>
             <Button type="primary" title="查看" onClick={() => this.handleModalInfo(record)} shape="circle" icon={<EyeOutlined/>}/>
             &nbsp;
+            <Button type="primary" title="数据" onClick={() => this.handleModalCtrl(record)} shape="circle" icon={<DashboardOutlined />}/>
+            &nbsp;
             <Button type="primary" title="编辑" onClick={() => this.handleModalEdit(record)} shape="circle" icon={<EditOutlined/>}/>
             &nbsp;
-            <Button type="primary" title="删除" onClick={() => this.handleDellClient(record)} shape="circle" icon={<DeleteOutlined />}/>
+            <Button type="primary" title="删除" onClick={() => this.handleDellClient(record)} danger shape="circle" icon={<DeleteOutlined />}/>
           </div>
         ),
       },
@@ -262,6 +249,14 @@ class Client extends Component {
   };
 
   /**
+   * 显示控制面板的弹窗
+   */
+  handleModalCtrl = (value) => {
+    this.ctrlRef.handleDisplay(value);
+  };
+
+
+  /**
    * 删除指定设备
    */
   handleDellClient= (value) => {
@@ -317,6 +312,14 @@ class Client extends Component {
    */
   bindViewClientFormRef = (ref) => {
     this.viewRef = ref
+  };
+
+  /**
+   * 控制面板组件ref绑定
+   * @param ref
+   */
+  bindCtrlClientFormRef = (ref) => {
+    this.ctrlRef = ref
   };
 
   /**
@@ -396,6 +399,7 @@ class Client extends Component {
                    }}/>
           </Col>
           <ViewClientModal onRef={this.bindViewClientFormRef.bind(this)}/>
+          <CtrlClientModal onRef={this.bindCtrlClientFormRef.bind(this)}/>
           <EditClientModal onRef={this.bindClientFormRef.bind(this)} refreshList={this.refreshListFromClientModal}/>
         </section>
       </DocumentTitle>

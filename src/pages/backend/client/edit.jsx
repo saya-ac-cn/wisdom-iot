@@ -1,9 +1,11 @@
 import React, { Component } from 'react';
 import {Form, Input, Card, Tooltip, Select, Radio, Modal} from "antd";
 import {QuestionCircleOutlined} from '@ant-design/icons';
-import {getIotGatewayList, getIotProductList, getAvailableSerialNum, addIotClient, editIotClient} from '../../../api'
+import {getProductList, addIotClient, editIotClient,getIotIdentify} from '../../../api'
 import {openNotificationWithIcon} from "../../../utils/window";
-import {clearTrimValueEvent} from "../../../utils/string";
+import {clearTrimValueEvent,generateRandomStr,generateRandomFixedStr} from "../../../utils/string";
+import memoryUtils from "../../../utils/memoryUtils";
+import {Redirect} from "react-router-dom";
 
 /*
  * 文件名：edit.jsx
@@ -19,19 +21,17 @@ class EditClient extends Component {
 
   state = {
     client:{},
-    // 这两个参数指标保存起来，当用户放弃更换网关时，允许还原
-    lastSelectGateway:null,
-    lastSelectSerialNum:null,
+    identify:{username:"",password: ""},
     visibleModal:false,
-    gatewaySelectData: [],// 系统返回的网关设备类别
     productSelectData:[],// 系统返回的产品列表
-    availableSerialNum:[]// 系统返回的可用设备序号
   };
 
   /**
    * 关闭弹框
    */
   handleCancel = () => {
+    // 重置表单
+    this.formRef.current.resetFields();
     this.setState({visibleModal: false});
   };
 
@@ -42,23 +42,24 @@ class EditClient extends Component {
    */
   handleDisplay = (val) => {
     let _this = this;
-    console.log('val',val);
-    _this.setState({
-      client: val,
-      visibleModal: true
-    },function () {
-      //注意 initialValues 不能被 setState 动态更新，你需要用 setFieldsValue 来更新。
-      if(!val || !val.id){
-        _this.formRef.current.setFieldsValue({"gatewayId":null,"serialNum":null,"productId":null,"name":null,"enable":null});
-      }else{
-        _this.formRef.current.setFieldsValue(val);
-        _this.getSerialNumRadioData(val.gatewayId);
-        _this.setState({
-          lastSelectGateway:val.gatewayId,
-          lastSelectSerialNum:val.serialNum,
-        });
-      }
-    });
+    if(!val || !val.id){
+      const identify = {username:generateRandomFixedStr(generateRandomStr(),20),password: ""}
+      _this.setState({
+        client: val,
+        identify: identify,
+        visibleModal: true
+      });
+      // 踩坑，页面在第一次打开时，his.formRef.current为空，解决办法：设置Modal的forceRender=true（强制渲染Modal）
+      _this.formRef.current.setFieldsValue({"authenUserName":identify.username,"authenPassword":null,"productId":null,"name":null,"enable":null});
+    }else{
+      // 获取相应的认证信息
+      _this.getIotIdentifyData(val.identifyUuid)
+      _this.setState({
+        client: val,
+        visibleModal: true
+      });
+      _this.formRef.current.setFieldsValue(val);
+    }
   };
 
 
@@ -68,14 +69,13 @@ class EditClient extends Component {
   handleSubmit = () =>{
     const _this = this;
     const client = _this.state.client;
-    _this.formRef.current.validateFields(["gatewayId","serialNum","productId","name","enable"]).then(value => {
+    _this.formRef.current.validateFields(["authenPassword","authenUserName","productId","name","enable"]).then(value => {
       if(!client.id){
         let para = {
-          gatewayId: value.gatewayId,
           productId: value.productId,
           name: value.name,
-          serialNum:value.serialNum,
           enable: value.enable,
+          authenInfo: {username:value.authenUserName,password:value.authenPassword}
         };
         // 执行添加
         _this.handleAdd(para);
@@ -83,14 +83,13 @@ class EditClient extends Component {
         // 执行修改
         let para = {
           id: client.id,
-          gatewayId: value.gatewayId,
           name: value.name,
           enable: value.enable,
-          serialNum:value.serialNum
+          authenInfo: {username:value.authenUserName,password:value.authenPassword}
         };
         _this.handleRenew(para);
       }
-    }).catch(e => console.log("修改或添加网关错误",e));
+    }).catch(e => console.log("修改或添加设备错误",e));
   };
 
   /**
@@ -103,8 +102,6 @@ class EditClient extends Component {
     const {msg, code} = await addIotClient(value);
     if (code === 0) {
       openNotificationWithIcon("success", "操作结果", "添加成功");
-      // 重置表单
-      _this.formRef.current.resetFields();
       // 刷新列表
       _this.props.refreshList();
       // 关闭窗口
@@ -136,36 +133,13 @@ class EditClient extends Component {
   };
 
   /**
-   * 获取网关类别
-   * @returns {Promise<void>}
-   */
-  getGateWaySelectData = async () => {
-    let _this = this;
-    // 发异步ajax请求, 获取数据
-    const {msg, code, data} = await getIotGatewayList();
-    if (code === 0) {
-      // 利用更新状态的回调函数，渲染下拉选框
-      let gatewaySelectData = [];
-      gatewaySelectData.push((<Option key={-1} value="">请选择</Option>));
-      data.forEach(item => {
-        gatewaySelectData.push((<Option key={item.id} value={item.id}>{item.name}</Option>));
-      });
-      _this.setState({
-        gatewaySelectData
-      });
-    } else {
-      openNotificationWithIcon("error", "错误提示", msg);
-    }
-  };
-
-  /**
    * 获取产品类型
    * @returns {Promise<void>}
    */
   getProductSelectData = async () => {
     let _this = this;
     // 发异步ajax请求, 获取数据
-    const {msg, code, data} = await getIotProductList();
+    const {msg, code, data} = await getProductList();
     if (code === 0) {
       // 利用更新状态的回调函数，渲染下拉选框
       let productSelectData = [];
@@ -182,48 +156,20 @@ class EditClient extends Component {
   };
 
   /**
-   * 网关下拉选择列表发生切换事件后，需要级联触发网关下可用的数字引脚变化，同时，已选的序号需要置空
-   * @param val
-   */
-  gateWaySelectChange = (val) => {
-    let _this = this;
-    let {lastSelectGateway,lastSelectSerialNum} = _this.state;
-    if (null !== lastSelectGateway && null !== lastSelectSerialNum && lastSelectGateway === val){
-      // 用户最终还是放弃了挣扎
-      _this.formRef.current.setFieldsValue({"serialNum":lastSelectSerialNum});
-      return
-    }
-    _this.formRef.current.setFieldsValue({"serialNum":null});
-    if (!val){
-      _this.setState({
-        availableSerialNum:[]
-      });
-      return
-    }
-    _this.getSerialNumRadioData(val);
-  };
-
-  /**
-   * 获取指定网关下的数字引脚
-   * @param val 网关id
+   * 获取设备认证信息
    * @returns {Promise<void>}
    */
-  getSerialNumRadioData = async (val) => {
+  getIotIdentifyData = async (identifyUuid) => {
     let _this = this;
     // 发异步ajax请求, 获取数据
-    const {msg, code, data} = await getAvailableSerialNum(val);
+    const {msg, code, data} = await getIotIdentify(identifyUuid);
     if (code === 0) {
       // 利用更新状态的回调函数，渲染下拉选框
-      let availableSerialNum = [];
-      for(let serialNum in data){
-        if (data[serialNum]){
-          availableSerialNum.push((<Radio.Button key={serialNum} value={serialNum} disabled>序号{serialNum}({data[serialNum]}已使用)</Radio.Button>));
-        }else{
-          availableSerialNum.push((<Radio.Button key={serialNum} value={serialNum}>序号{serialNum}(未使用)</Radio.Button>));
-        }
-      }
+      const identify = {username:data.username,password: data.password}
       _this.setState({
-        availableSerialNum
+        identify
+      }, () =>{
+        _this.formRef.current.setFieldsValue({"authenUserName":data.username,"authenPassword":data.password});
       });
     } else {
       openNotificationWithIcon("error", "错误提示", msg);
@@ -233,7 +179,6 @@ class EditClient extends Component {
   componentWillMount () {
     const _this = this;
     // 初始化下拉列表数据
-    _this.getGateWaySelectData();
     _this.getProductSelectData();
     _this.props.onRef(_this);
     _this.formItemLayout = {
@@ -244,22 +189,26 @@ class EditClient extends Component {
 
 
   render() {
-    const {gatewaySelectData,productSelectData,availableSerialNum,client,visibleModal} = this.state;
+    const {productSelectData,client,visibleModal,identify} = this.state;
+    const user = memoryUtils.user;
+    // 如果内存没有存储user ==> 当前没有登陆
+    if (!user || !user.account) {
+      // 自动跳转到登陆(在render()中)
+      return <Redirect to='/login'/>
+    }
     return (
-        <Modal title={!client || !client.id ? '添加设备':'编辑设备'} visible={visibleModal} maskClosable={false} width="60%" okText='保存' onOk={this.handleSubmit} onCancel={this.handleCancel}>
+        <Modal title={!client || !client.id ? '添加设备':'编辑设备'} forceRender={true} visible={visibleModal} maskClosable={false} width="60%" okText='保存' onOk={this.handleSubmit} onCancel={this.handleCancel}>
           <Form {...this.formItemLayout} ref={this.formRef}>
-            <Card title="网关信息" bordered={false}>
-              <Form.Item label={<span>所属网关&nbsp;<Tooltip title="设备将要附属在哪个网关下边，一个设备只能从属于一个网关"><QuestionCircleOutlined /></Tooltip></span>}
-                         name="gatewayId" initialValue={client.gatewayId}  rules={[{required: true, message: '请选择网关'}]} {...this.formItemLayout}>
-                <Select placeholder="请选择网关类型" onChange={this.gateWaySelectChange} allowClear>
-                  {gatewaySelectData}
-                </Select>
+            <Card title="接入凭证" bordered={false}>
+              <Form.Item label={<span>认证编码&nbsp;<Tooltip title="认证编码是您的设备在平台中的唯一标识，用于连接时授权认证"><QuestionCircleOutlined /></Tooltip></span>}
+                         name="authenUserName" initialValue={identify.username}  getValueFromEvent={ (e) => clearTrimValueEvent(e)}
+                         rules={[{required: true, message: '请输入设备名称'},{min: 6, message: '长度在 6 到 30 个字符'},{max: 30, message: '长度在 6 到 30 个字符'}]} {...this.formItemLayout}>
+                <Input disabled={true} placeholder='请输入认证编码'/>
               </Form.Item>
-              <Form.Item label={<span>设备序号&nbsp;<Tooltip title="设备在网关下的下标号，用于网关和设备通信进行数据交换"><QuestionCircleOutlined /></Tooltip></span>}
-                         name="serialNum" initialValue={client.serialNum} rules={[{required: true, message: '请选择序号'}]} {...this.formItemLayout}>
-                <Radio.Group buttonStyle="solid">
-                  {availableSerialNum}
-                </Radio.Group>
+              <Form.Item label={<span>认证密钥&nbsp;<Tooltip title="认证密钥将作为您的网关连接服务器的凭证，每个网关都有独立的认证密钥"><QuestionCircleOutlined /></Tooltip></span>}
+                         name="authenPassword" initialValue={identify.password || ""} getValueFromEvent={ (e) => clearTrimValueEvent(e)}
+                         rules={[{required: true, message: '请输入认证密钥'},{min: 6, message: '长度在 6 到 15 个字符'},{max: 15, message: '长度在 6 到 15 个字符'}]} {...this.formItemLayout}>
+                <Input type="password" placeholder='请输入认证密钥'/>
               </Form.Item>
             </Card>
             <Card title="产品信息" bordered={false}>
