@@ -7,6 +7,7 @@ import moment from 'moment';
 import "./index.less"
 import {getClientLatestCollect, getProductAbilityList} from "../../../api";
 import {openNotificationWithIcon} from "../../../utils/window";
+import {isEmptyObject} from "../../../utils/var";
 /*
  * 文件名：view.jsx
  * 作者：saya
@@ -19,8 +20,16 @@ class ClientCtrlModal extends Component {
 
 
   state = {
+    // 设备id
     clientId:{},
-    visibleModal:false
+    visibleModal:false,
+    loading:false,
+    // 设备能力模型
+    abilities:[],
+    // 根据能力模型分组后的采集信息
+    collectData:{},
+    // 看板
+    panel:[],
   };
 
 
@@ -37,9 +46,7 @@ class ClientCtrlModal extends Component {
    */
   handleDisplay = (val) => {
     let _this = this;
-    _this.getClientLatestCollectData(val.id);
-    _this.getProductAbility(val.productId)
-    console.log('val',val);
+    _this.displayCollectAndAbility(val)
     _this.setState({
       clientId: val.id,
       visibleModal: true
@@ -55,7 +62,7 @@ class ClientCtrlModal extends Component {
     // 发异步ajax请求, 获取数据
     const {msg, code, data} = await getClientLatestCollect(clientId);
     if (code === 0) {
-      console.log(data)
+      _this.setState({collectData: data});
     } else {
       openNotificationWithIcon("error", "错误提示", msg);
     }
@@ -73,12 +80,49 @@ class ClientCtrlModal extends Component {
     // 发异步ajax请求, 获取数据
     const {msg, code, data} = await getProductAbilityList(id);
     if (code === 0) {
-      console.log(data)
-      //_this.setState({abilities: data,abilitySelect: abilitySelect});
+      _this.setState({abilities: data});
     } else {
       openNotificationWithIcon("error", "错误提示", msg);
     }
   };
+
+  displayCollectAndAbility = async (client)=>{
+    const _this = this;
+    await _this.getClientLatestCollectData(client.id);
+    await _this.getProductAbility(client.productId)
+    let {abilities,collectData} = _this.state;
+    if (!abilities){
+      // 没有能力模型，不予显示
+      return
+    }
+    /**
+     * id: 1
+     name: "温度"
+     nowPage: null
+     pageSize: null
+     productId: 1
+     property: "temperature"
+     rwFlag: 1
+     */
+    // 把已经设置过的物模型剔除
+    let panel = abilities.reduce((pre, abilitiesItem) => {
+      const abilityId = abilitiesItem.id
+      const collect = collectData[abilityId]
+      const card =<Col span={6} key={abilityId}>
+        <Card>
+          <div style={{display: 'flow-root'}}>
+            <span style={{color: '#544343',float:'left'}}>{abilitiesItem.name}</span>
+            {1===abilitiesItem.rwFlag?null:<a style={{float:'right'}}>下发指令</a>}
+          </div>
+          <div style={{fontSize: '2.5em',marginTop:'0.3em',marginBottom:'0.3em'}}>{!collect?'暂无数据':collect.value+abilitiesItem.standardUnit.symbol}</div>
+          <div style={{color: '#ccc'}}>{!collect?<span>&nbsp;</span>:collect.collectTime}</div>
+        </Card>
+      </Col>
+      pre.push(card);
+      return pre
+    }, []);
+    _this.setState({panel:panel});
+  }
 
   /**
    * 为第一次render()准备数据
@@ -90,51 +134,14 @@ class ClientCtrlModal extends Component {
   };
 
   render() {
-    const {visibleModal,clientId} = this.state;
+    const {visibleModal,panel} = this.state;
     return (
         <Modal title="设备控制面板"
                 className="client-v1-modal-info"
                 width="60%" visible={visibleModal} maskClosable={false} closable={true}
                 footer={null} okText={null} onOk={null} onCancel={this.handleCancel}>
           <Row gutter={[8, 8]}>
-            <Col span={6}>
-              <Card loading={true}>
-                <p>Card content</p>
-                <p>Card content</p>
-                <p>Card content</p>
-              </Card>
-            </Col>
-            <Col span={6}>
-              <Card>
-                <div style={{display: 'flow-root'}}>
-                  <span style={{color: '#544343',float:'left'}}>电压</span>
-                  <a style={{float:'right'}}>下发指令</a>
-                </div>
-                <div style={{fontSize: '2.5em',marginTop:'0.3em',marginBottom:'0.3em'}}>220V</div>
-                <div style={{color: '#ccc'}}>2022-01-23 14:51:37</div>
-              </Card>
-            </Col>
-            <Col span={6}>
-              <Card>
-                <p>Card content</p>
-                <p>Card content</p>
-                <p>Card content</p>
-              </Card>
-            </Col>
-            <Col span={6}>
-              <Card>
-                <p>Card content</p>
-                <p>Card content</p>
-                <p>Card content</p>
-              </Card>
-            </Col>
-            <Col span={6}>
-              <Card>
-                <p>Card content</p>
-                <p>Card content</p>
-                <p>Card content</p>
-              </Card>
-            </Col>
+            {panel}
           </Row>
         </Modal>
     );
