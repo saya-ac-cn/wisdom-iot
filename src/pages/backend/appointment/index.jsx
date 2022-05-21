@@ -59,21 +59,9 @@ class Appointment extends Component {
         dataIndex: 'name', // 显示数据对应的属性名
       },
       {
-        title: '网关名',
-        render: (text,record) => {
-          return record.iotClient.gateway.name || null;
-        }
-      },
-      {
         title: '设备名',
         render: (text,record) => {
           return record.iotClient.name || null;
-        }
-      },
-      {
-        title: '设备地址',
-        render: (text,record) => {
-          return record.iotClient.gateway.address || null;
         }
       },
       {
@@ -94,7 +82,7 @@ class Appointment extends Component {
       },
       {
         title: '最后执行时间',
-        dataIndex: 'excuteTime', // 显示数据对应的属性名
+        dataIndex: 'executeTime', // 显示数据对应的属性名
       },
       {
         title: '执行状态',
@@ -114,7 +102,7 @@ class Appointment extends Component {
           <div>
             <Button type="primary" title="编辑" onClick={() => this.handleModalEdit(record)} shape="circle" icon={<EditOutlined/>}/>
             &nbsp;
-            <Button type="primary" title="删除" onClick={() => this.handleDellAppointment(record)} shape="circle" icon={<DeleteOutlined />}/>
+            <Button type="primary" title="删除" onClick={() => this.handleDellAppointment(record)} danger shape="circle" icon={<DeleteOutlined />}/>
           </div>
         ),
       },

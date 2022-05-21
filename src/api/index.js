@@ -14,7 +14,7 @@ export const requestLogin = params => ajax(`${backendAPI}/login`, params, 'POST'
 // 注销接口
 export const requestLogout = params => ajax(`${backendAPI}/logout`, params, 'POST');
 // 查询最近的告警事件列表
-export const getLatestWarning = params => ajax(`${backendAPI}/chart/latestWarning${params}`, {}, 'GET');
+export const getLatestWarning = params => ajax(`${backendAPI}/chart/latestWarning/${params}`, {}, 'GET');
 // 查询设备概览
 export const getClientOverview = params => ajax(`${backendAPI}/chart/clientOverview`, {}, 'GET');
 // 查询产品概览

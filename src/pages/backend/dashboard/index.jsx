@@ -3,8 +3,9 @@ import {Row, Col, Card, List, Skeleton, Modal, Select, Avatar} from "antd";
 import {SyncOutlined,WarningOutlined} from '@ant-design/icons';
 import DocumentTitle from 'react-document-title'
 import "./index.less"
-import {getLatestWarning,getPre7DayCollect} from "../../../api";
+import {getLatestWarning,getPre7DayCollect,getClientOverview} from "../../../api";
 import { Line } from '@ant-design/charts';
+import { RingProgress } from '@ant-design/plots';
 import {openNotificationWithIcon} from "../../../utils/window";
 /*
  * 文件名：index.jsx
@@ -64,6 +65,27 @@ class DashBoard extends Component {
           lineWidth: 2,
         },
       },
+    },
+    clientOverviewData:{},
+    clientOverviewLoading: false,
+    clientOverviewConfig:{
+      height: 100,
+      width: 100,
+      autoFit: false,
+      percent: 1.0,
+      color: ['#F4664A', '#E8EDF3'],
+      innerRadius: 0.85,
+      radius: 0.98,
+      statistic: {
+        title: {
+          style: {
+            color: '#363636',
+            fontSize: '12px',
+            lineHeight: '14px',
+          },
+          formatter: () => '总数',
+        },
+      },
     }
   };
 
@@ -81,10 +103,7 @@ class DashBoard extends Component {
     _this.setState({latestWarningListLoading: false});
     if (code === 0) {
       // 在发请求前, 显示loading
-      _this.setState({latestWarningList: [{"nowPage":null,"pageSize":null,"startLine":null,"endLine":null,"endTime":null,"id":1,"clientId":null,"ruleId":null,"topic":"温度告警","content":"当前温度=21，超过阈值20","createTime":"2021-12-05 17:52:50","iotClient":{"nowPage":null,"pageSize":null,"startLine":null,"endLine":null,"endTime":null,"id":2,"productId":null,"identifyUuid":null,"name":"郁金香温湿度采集","lastLinkTime":"2021-09-21 08:53:06","enable":null,"remove":null,"belongUser":null,"createTime":null,"updateTime":null,"productName":null,"authenInfo":null,"startTime":null},"iotRule":{"nowPage":null,"pageSize":null,"startLine":null,"endLine":null,"endTime":null,"id":3,"name":"温度大于20摄氏度","productId":null,"abilityId":null,"symbol":null,"value1":null,"value2":null,"enable":null,"eventAttribute":null,"eventValue":null,"createTime":null,"updateTime":null,"abilityEntity":null,"startTime":null},"startTime":null}
-      ,{"nowPage":null,"pageSize":null,"startLine":null,"endLine":null,"endTime":null,"id":1,"clientId":null,"ruleId":null,"topic":"温度告警","content":"当前温度=21，超过阈值20","createTime":"2021-12-05 17:52:50","iotClient":{"nowPage":null,"pageSize":null,"startLine":null,"endLine":null,"endTime":null,"id":2,"productId":null,"identifyUuid":null,"name":"郁金香温湿度采集","lastLinkTime":"2021-09-21 08:53:06","enable":null,"remove":null,"belongUser":null,"createTime":null,"updateTime":null,"productName":null,"authenInfo":null,"startTime":null},"iotRule":{"nowPage":null,"pageSize":null,"startLine":null,"endLine":null,"endTime":null,"id":3,"name":"温度大于20摄氏度","productId":null,"abilityId":null,"symbol":null,"value1":null,"value2":null,"enable":null,"eventAttribute":null,"eventValue":null,"createTime":null,"updateTime":null,"abilityEntity":null,"startTime":null},"startTime":null},{"nowPage":null,"pageSize":null,"startLine":null,"endLine":null,"endTime":null,"id":1,"clientId":null,"ruleId":null,"topic":"温度告警","content":"当前温度=21，超过阈值20","createTime":"2021-12-05 17:52:50","iotClient":{"nowPage":null,"pageSize":null,"startLine":null,"endLine":null,"endTime":null,"id":2,"productId":null,"identifyUuid":null,"name":"郁金香温湿度采集","lastLinkTime":"2021-09-21 08:53:06","enable":null,"remove":null,"belongUser":null,"createTime":null,"updateTime":null,"productName":null,"authenInfo":null,"startTime":null},"iotRule":{"nowPage":null,"pageSize":null,"startLine":null,"endLine":null,"endTime":null,"id":3,"name":"温度大于20摄氏度","productId":null,"abilityId":null,"symbol":null,"value1":null,"value2":null,"enable":null,"eventAttribute":null,"eventValue":null,"createTime":null,"updateTime":null,"abilityEntity":null,"startTime":null},"startTime":null}
-      ,{"nowPage":null,"pageSize":null,"startLine":null,"endLine":null,"endTime":null,"id":1,"clientId":null,"ruleId":null,"topic":"温度告警","content":"当前温度=21，超过阈值20","createTime":"2021-12-05 17:52:50","iotClient":{"nowPage":null,"pageSize":null,"startLine":null,"endLine":null,"endTime":null,"id":2,"productId":null,"identifyUuid":null,"name":"郁金香温湿度采集","lastLinkTime":"2021-09-21 08:53:06","enable":null,"remove":null,"belongUser":null,"createTime":null,"updateTime":null,"productName":null,"authenInfo":null,"startTime":null},"iotRule":{"nowPage":null,"pageSize":null,"startLine":null,"endLine":null,"endTime":null,"id":3,"name":"温度大于20摄氏度","productId":null,"abilityId":null,"symbol":null,"value1":null,"value2":null,"enable":null,"eventAttribute":null,"eventValue":null,"createTime":null,"updateTime":null,"abilityEntity":null,"startTime":null},"startTime":null}
-      ,{"nowPage":null,"pageSize":null,"startLine":null,"endLine":null,"endTime":null,"id":1,"clientId":null,"ruleId":null,"topic":"温度告警","content":"当前温度=21，超过阈值20","createTime":"2021-12-05 17:52:50","iotClient":{"nowPage":null,"pageSize":null,"startLine":null,"endLine":null,"endTime":null,"id":2,"productId":null,"identifyUuid":null,"name":"郁金香温湿度采集","lastLinkTime":"2021-09-21 08:53:06","enable":null,"remove":null,"belongUser":null,"createTime":null,"updateTime":null,"productName":null,"authenInfo":null,"startTime":null},"iotRule":{"nowPage":null,"pageSize":null,"startLine":null,"endLine":null,"endTime":null,"id":3,"name":"温度大于20摄氏度","productId":null,"abilityId":null,"symbol":null,"value1":null,"value2":null,"enable":null,"eventAttribute":null,"eventValue":null,"createTime":null,"updateTime":null,"abilityEntity":null,"startTime":null},"startTime":null}]});
+      _this.setState({latestWarningList: data});
     } else {
       openNotificationWithIcon("error", "错误提示", msg);
     }
@@ -111,16 +130,37 @@ class DashBoard extends Component {
   }
 
   /**
+   * 获取设备概览
+   * @returns {Promise<void>}
+   */
+  getClientOverviewData = async () => {
+    const _this = this;
+    // 在发请求前, 显示loading
+    _this.setState({clientOverviewLoading: true});
+    // 发异步ajax请求, 获取数据
+    const {msg, code, data} = await getClientOverview();
+    // 在发请求前, 显示loading
+    _this.setState({clientOverviewLoading: false});
+    if (code === 0) {
+      // 在发请求前, 显示loading
+      _this.setState({clientOverviewData: data});
+    } else {
+      openNotificationWithIcon("error", "错误提示", msg);
+    }
+  }
+
+  /**
    * 执行异步任务: 发异步ajax请求
    */
   componentDidMount() {
     this.getLatestWarningList()
     this.getPre7DayCollectList()
+    this.getClientOverviewData()
   }
 
 
   render() {
-    const {latestWarningListLoading,latestWarningList,uploadDate,uploadDateChartConfig,uploadDateLoading} = this.state;
+    const {latestWarningListLoading,latestWarningList,uploadDate,uploadDateChartConfig,uploadDateLoading,clientOverviewConfig,clientOverviewLoading,clientOverviewData} = this.state;
     return (
       <DocumentTitle title='物联网智慧家庭·远程控制'>
         <section className="chart-v1">
@@ -168,9 +208,8 @@ class DashBoard extends Component {
             </Col>
             <div className='panel-right'>
               <Card className='client-panel' title={<span className='operation-color'>设备概览</span>} hoverable={true} extra={<SyncOutlined className='operation-color'/>}>
-                 <p>Card content</p>
-                  <p>Card content</p>
-                </Card>
+                <div className='client-overview'>12</div>
+              </Card>
             </div>
           </div>
         </section>

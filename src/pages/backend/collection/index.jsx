@@ -46,21 +46,15 @@ class Collections extends Component {
         const _this = this;
         _this.columns = [
             {
+              title: '设备id',
+              render: (text, record) => {
+                return record.iotClient ? record.iotClient.id : '-';
+              }
+            },
+            {
                 title: '设备名',
                 render: (text, record) => {
                     return record.iotClient ? record.iotClient.name : '-';
-                }
-            },
-            {
-                title: '网关名',
-                render: (text,record) => {
-                    return record.iotClient && record.iotClient.gateway ? record.iotClient.gateway.name : null;
-                }
-            },
-            {
-                title: '网关地址',
-                render: (text,record) => {
-                    return (record.iotClient && record.iotClient.gateway) ? record.iotClient.gateway.address : null;
                 }
             },
             {

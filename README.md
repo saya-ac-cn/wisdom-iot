@@ -57,6 +57,11 @@
     npm install http-proxy-middleware
 ```
 
+## 安装antd图表
+```shell script
+  npm install @ant-design/charts
+```
+
 ### 重大变更历程事件
 
 > ## 2020-07-18 修改记录-重大修改

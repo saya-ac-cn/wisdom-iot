@@ -44,7 +44,7 @@ class EditAppointment extends Component {
     let _this = this;
     let dynamicCommand = <Input/>;
     if (val && val.iotClient){
-      // 加入是修改，并且查出了所属产品，那就把它的物模型拿出来以便于回显
+      // 假如是修改，并且查出了所属产品，那就把它的物模型拿出来以便于回显
       _this.getProductAbility(val.iotClient.productId);
     }
     if (val && val.iotAbility && 2 === val.iotAbility.type && val.iotAbility.scope){
@@ -63,7 +63,7 @@ class EditAppointment extends Component {
     },function () {
       //注意 initialValues 不能被 setState 动态更新，你需要用 setFieldsValue 来更新。
       if(!val || !val.code){
-        _this.formRef.current.setFieldsValue({"clientId":null,"name":null,"abilityId":null,"gatewayAddress":null,"gatewayType":null});
+        _this.formRef.current.setFieldsValue({"clientId":null,"name":null,"abilityId":null});
       }else{
         console.log(val)
         //_this.getProductAbility(val.iotClient);
@@ -86,7 +86,7 @@ class EditAppointment extends Component {
       clientSelectData.push((<Option key={-1} value="">请选择</Option>));
       data.forEach(item => {
         // 自定义的属性需要小写
-        clientSelectData.push((<Option key={item.id} productid={item.productId} value={item.id}>{`${item.name}(${item.gateway.name})`}</Option>));
+        clientSelectData.push((<Option key={item.id} productid={item.productId} value={item.id}>{`${item.name}`}</Option>));
       });
       _this.setState({
         clientSelectData

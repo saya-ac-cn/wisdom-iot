@@ -9,7 +9,6 @@ import {isEmptyObject} from "../../../utils/var"
 import { Button, Menu, Popover, Avatar, Breadcrumb, Badge, Modal} from 'antd';
 import { FundProjectionScreenOutlined, NotificationOutlined,ToolOutlined, HistoryOutlined, MessageOutlined, DesktopOutlined,HomeOutlined,ExceptionOutlined,CodeOutlined,LaptopOutlined} from '@ant-design/icons';
 import DashBoard from '../../backend/dashboard'
-import Gateway from '../../backend/gateway'
 import Client from '../../backend/client'
 import Appointment from '../../backend/appointment'
 import {requestLogout} from "../../../api";
@@ -81,22 +80,33 @@ class Backend1 extends Component {
       </div>
     </div>
   )
-
-  /**
-   * 根据menu的数据数组生成对应的标签数组
-   * 使用reduce() + 递归调用
-   **/
+  /*
+   根据menu的数据数组生成对应的标签数组
+   使用reduce() + 递归调用
+   */
   getMenuNodes = (menuList) => {
     let _this = this;
     // 得到当前请求的路由路径
-    const path = _this.props.location.pathname;
+    const path = this.props.location.pathname;
     return menuList.reduce((pre, item) => {
       // 向pre添加<Menu.Item>
       if (!item.children && item.hidden === false) {
-        pre.push((
-          //<Menu.Item key={item.key}>{item.title}</Menu.Item>
-          <Menu.Item key={item.key}><Button type="link" href={item.key}>{item.title}</Button></Menu.Item>
-        ))
+        if(item.root){
+          // 处理只有根节点，无子节点的菜单
+          if(path===item.key){
+            // 当前打开的是根节点且无子节点，无须展开
+            _this.setState({
+              openKeys:[]
+            })
+          }
+          pre.push((
+            <Menu.Item key={item.key} icon={_this.transformComponent(item.icon)}><Button type="link" style={{padding:0,color:'rgba(255, 255, 255, 0.7)'}} href={item.key}>{item.title}</Button></Menu.Item>
+          ))
+        }else{
+          pre.push((
+            <Menu.Item key={item.key}><Button type="link" href={item.key}>{item.title}</Button></Menu.Item>
+          ))
+        }
       } else if (item.children && item.hidden === false) {
         // 查找一个与当前请求路径匹配的子Item
         const cItem = item.children.find(cItem => path.indexOf(cItem.key) === 0);
@@ -108,7 +118,7 @@ class Backend1 extends Component {
         }
         // 向pre添加<SubMenu>
         pre.push((
-          <SubMenu key={item.key} icon={_this.transformComponent(item.icon)} title={<span>{item.title}</span>}>
+          <SubMenu key={item.key} icon={_this.transformComponent(item.icon)} style={{color:'rgba(255, 255, 255, 0.7)'}} title={<span>{item.title}</span>}>
             {_this.getMenuNodes(item.children)}
           </SubMenu>
         ));
@@ -305,8 +315,7 @@ class Backend1 extends Component {
             <div className='content-div'>
               <div className='container-div'>
                 <Switch>
-                  <Route path='/backstage/api/mana' component={DashBoard}/>
-                  <Route path='/backstage/device/gateway' component={Gateway}/>
+                  <Route path='/backstage/chart' component={DashBoard}/>
                   <Route path='/backstage/device/client' component={Client}/>
                   <Route path='/backstage/device/appointment' component={Appointment}/>
                   <Route path='/backstage/waring/result' component={WaringResult}/>
@@ -314,7 +323,7 @@ class Backend1 extends Component {
                   <Route path='/backstage/device/product' component={Product}/>
                   <Route path='/backstage/history/send' component={SendHistory}/>
                   {/*默认、及匹配不到时的页面*/}
-                  <Redirect to='/backstage/api/mana'/>
+                  <Redirect to='/backstage/chart'/>
                 </Switch>
               </div>
             </div>

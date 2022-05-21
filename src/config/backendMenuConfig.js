@@ -9,19 +9,13 @@
 
 const backstageMenuList = [
     {
-        title: '控制面板',// 菜单标题名称
-        key: '/backstage/api',// 对应的path
-        icon: 'HomeOutlined',// 图标名称
-        hidden: false, //是否隐藏
-        requireAuth: true, // 是否需要登录后访问
-        children: [ // 子菜单列表
-            {
-                title: '远程控制',
-                key: '/backstage/api/mana',
-                hidden: false,
-                requireAuth: true
-            }
-        ]
+      title: '主页',// 菜单标题名称
+      key: '/backstage/chart',// 对应的path
+      icon: 'HomeOutlined',// 图标名称
+      hidden: false, //是否隐藏
+      requireAuth: true, // 是否需要登录后访问
+      root:true, // 是否为根节点（当根节点下无子节点时，需要设置本位）
+      children: null
     },
     {
         title: '设备管理',// 菜单标题名称
@@ -30,12 +24,6 @@ const backstageMenuList = [
         hidden: false, //是否隐藏
         requireAuth: true, // 是否需要登录后访问
         children: [ // 子菜单列表
-            {
-                title: '网关管理',
-                key: '/backstage/device/gateway',
-                hidden: false,
-                requireAuth: true
-            },
             {
                 title: '设备管理',
                 key: '/backstage/device/client',
@@ -62,12 +50,6 @@ const backstageMenuList = [
                 key: '/backstage/device/appointment',
                 hidden: false,
                 requireAuth: true
-            },
-            {
-                title: '告警记录',
-                key: '/backstage/waring/result',
-                hidden: false,
-                requireAuth: true
             }
         ]
     },
@@ -89,6 +71,12 @@ const backstageMenuList = [
                 key: '/backstage/history/receive',
                 hidden: false,
                 requireAuth: true
+            },
+            {
+              title: '告警记录',
+              key: '/backstage/waring/result',
+              hidden: false,
+              requireAuth: true
             }
         ]
     }
