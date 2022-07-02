@@ -8,6 +8,7 @@ import "./index.less"
 import {getClientLatestCollect, getProductAbilityList} from "../../../api";
 import {openNotificationWithIcon} from "../../../utils/window";
 import {isEmptyObject} from "../../../utils/var";
+import CommandModal from "./command"
 /*
  * 文件名：view.jsx
  * 作者：saya
@@ -18,6 +19,7 @@ import {isEmptyObject} from "../../../utils/var";
 // 定义组件（ES6）
 class ClientCtrlModal extends Component {
 
+  commandRef = React.createRef();
 
   state = {
     // 设备id
@@ -54,6 +56,13 @@ class ClientCtrlModal extends Component {
   };
 
   /**
+   * 显示发送指令的弹窗
+   */
+  handleModalCommand = (value) => {
+    this.commandRef.handleDisplay(value);
+  };
+
+  /**
    * 获取设备最新的采集信息
    * @returns {Promise<void>}
    */
@@ -64,11 +73,13 @@ class ClientCtrlModal extends Component {
     if (code === 0) {
       _this.setState({collectData: data});
     } else {
+      _this.setState({collectData: {}});
       openNotificationWithIcon("error", "错误提示", msg);
     }
   };
 
-  /**
+  /**事件联动
+
    * 获取产品物模型列表数据
    * @returns {Promise<void>}
    */
@@ -82,6 +93,7 @@ class ClientCtrlModal extends Component {
     if (code === 0) {
       _this.setState({abilities: data});
     } else {
+      _this.setState({abilities: []});
       openNotificationWithIcon("error", "错误提示", msg);
     }
   };
@@ -112,7 +124,7 @@ class ClientCtrlModal extends Component {
         <Card>
           <div style={{display: 'flow-root'}}>
             <span style={{color: '#544343',float:'left'}}>{abilitiesItem.name}</span>
-            {1===abilitiesItem.rwFlag?null:<a style={{float:'right'}}>下发指令</a>}
+            {1===abilitiesItem.rwFlag?null:<a style={{float:'right'}} onClick={()=>_this.handleModalCommand(abilitiesItem)}>下发指令</a>}
           </div>
           <div style={{fontSize: '2.5em',marginTop:'0.3em',marginBottom:'0.3em'}}>{!collect?'暂无数据':collect.value+abilitiesItem.standardUnit.symbol}</div>
           <div style={{color: '#ccc'}}>{!collect?<span>&nbsp;</span>:collect.collectTime}</div>
@@ -123,6 +135,14 @@ class ClientCtrlModal extends Component {
     }, []);
     _this.setState({panel:panel});
   }
+
+  /**
+   * 发送指令组件ref绑定
+   * @param ref
+   */
+  bindCommandFormRef = (ref) => {
+    this.commandRef = ref
+  };
 
   /**
    * 为第一次render()准备数据
@@ -143,6 +163,7 @@ class ClientCtrlModal extends Component {
           <Row gutter={[8, 8]}>
             {panel}
           </Row>
+          <CommandModal onRef={this.bindCommandFormRef.bind(this)}/>
         </Modal>
     );
   }

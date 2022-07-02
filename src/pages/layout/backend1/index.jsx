@@ -315,15 +315,14 @@ class Backend1 extends Component {
             <div className='content-div'>
               <div className='container-div'>
                 <Switch>
-                  <Route path='/backstage/chart' component={DashBoard}/>
+                  <Route path='/backstage/device/product' component={Product}/>
                   <Route path='/backstage/device/client' component={Client}/>
                   <Route path='/backstage/device/appointment' component={Appointment}/>
                   <Route path='/backstage/waring/result' component={WaringResult}/>
                   <Route path='/backstage/history/receive' component={Collections}/>
-                  <Route path='/backstage/device/product' component={Product}/>
                   <Route path='/backstage/history/send' component={SendHistory}/>
                   {/*默认、及匹配不到时的页面*/}
-                  <Redirect to='/backstage/chart'/>
+                  <Redirect to='/backstage/device/product'/>
                 </Switch>
               </div>
             </div>
