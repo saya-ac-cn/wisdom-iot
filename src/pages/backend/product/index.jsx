@@ -191,7 +191,8 @@ class Product extends Component {
     formatScope = (record) => {
       const scope = record.scopeParam;
         if ((record.type)&&(1===record.type)) {
-            return `起始值:${scope.beginThreshold},结束值:${scope.endThreshold}`;
+            //return `起始值:${scope.beginThreshold},结束值:${scope.endThreshold}`;
+            return `[${scope.beginThreshold},${scope.endThreshold}]`;
         }else{
             // 枚举类型
             const status = scope.status;

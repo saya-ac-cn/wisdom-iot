@@ -59,7 +59,9 @@ class ClientCtrlModal extends Component {
    * 显示发送指令的弹窗
    */
   handleModalCommand = (value) => {
-    this.commandRef.handleDisplay(value);
+    let commandParam = JSON.parse(JSON.stringify(value));
+    commandParam.clientId = this.state.clientId;
+    this.commandRef.handleDisplay(commandParam);
   };
 
   /**

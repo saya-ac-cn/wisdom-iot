@@ -33,7 +33,7 @@ class EditWaringRule extends Component {
     // 比较符号
     ruleOperations: [],
     // 动态命令输入框，通过物模型进行切换
-    dynamicCommand: <Input/>,
+    dynamicCommand: <InputNumber/>,
   };
 
   handleDisplay = (val) => {
@@ -186,7 +186,10 @@ class EditWaringRule extends Component {
     _this.formRef.current.setFieldsValue({command: null});
     if ((ability.type) && (1 === ability.type)) {
       //return `起始值:${scope.beginThreshold},结束值:${scope.endThreshold}`;
-      _this.setState({commandRequireFlag: true, dynamicCommand: <Input/>});
+      // _this.setState({commandRequireFlag: true, dynamicCommand: <Input/>});
+      const min = Number.parseFloat(scope.beginThreshold);
+      const max = Number.parseFloat(scope.endThreshold);
+      _this.setState({commandRequireFlag: true,dynamicCommand: <div><InputNumber min={min} max={max} style={{width:'12em'}}/><span style={{color:'#ff4d4f',marginLeft:'1em'}}>阈值范围[{min},{max}]</span></div>});
     } else {
       // 枚举类型
       const status = scope.status;
